@@ -49,11 +49,11 @@ public class ScorecardManager : MonoBehaviour
                     scoreObj.tag = "ScoreBtn";
                     if (i == par + 2)
                     {
-                        scoreObj.transform.Find("score").GetComponent<TextMeshProUGUI>().text = $"{tempi}+";
+                        scoreObj.transform.Find("Background/Image/Score").GetComponent<TextMeshProUGUI>().text = $"{tempi}+";
                     }
                     else
                     {
-                        scoreObj.transform.Find("score").GetComponent<TextMeshProUGUI>().text = $"{tempi}";
+                        scoreObj.transform.Find("Background/Image/Score").GetComponent<TextMeshProUGUI>().text = $"{tempi}";
                     }
 
                     scoreObj.GetComponent<Button>().onClick.AddListener(() =>
@@ -62,9 +62,9 @@ public class ScorecardManager : MonoBehaviour
                         List<GameObject> btns = FindAllChildrenWithTag(holePanels[tempCount - 1].transform, "ScoreBtn");
                         foreach (GameObject btn in btns)
                         {
-                            btn.GetComponent<Image>().color = new Color(0f, 0f, 0f, 1f);
+                            btn.transform.Find("Background/Image").GetComponent<Image>().color = Color.black;
                         }
-                        scoreObj.GetComponent<Image>().color = new Color(.117f, .0585f, .5686f, 1f);
+                        scoreObj.transform.Find("Background/Image").GetComponent<Image>().color = Color.white;
                     });
 
                 }

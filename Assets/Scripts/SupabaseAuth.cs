@@ -12,8 +12,9 @@ public class SupabaseAuth : MonoBehaviour
 {
     private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
     private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
-    public TMP_InputField emailInput; // Assign in Inspector
-    public TMP_InputField passwordInput; // Assign in Inspector
+    public TMP_InputField emailInput; 
+    public TMP_InputField passwordInput; 
+    public TMP_InputField userInput;
     public Button signIn; // Assign in Inspector
     public Button signUp; // Assign in Inspector
     public TMP_Text statusText; // Assign in Inspector for feedback
@@ -60,6 +61,7 @@ public class SupabaseAuth : MonoBehaviour
     {
         string email = emailInput.text;
         string password = passwordInput.text;
+        string username = userInput.text;
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
@@ -67,7 +69,7 @@ public class SupabaseAuth : MonoBehaviour
             return;
         }
 
-        SignUp(email, password, (success, message) =>
+        SignUp(email, password, username, (success, message) =>
         {
             statusText.text = message; // Show feedback
             if (success)
@@ -79,16 +81,16 @@ public class SupabaseAuth : MonoBehaviour
         });
     }
 
-    public void SignUp(string email, string password, System.Action<bool, string> callback)
+    public void SignUp(string email, string password, string username, System.Action<bool, string> callback)
     {
-        StartCoroutine(SignUpCoroutine(email, password, callback));
+        StartCoroutine(SignUpCoroutine(email, password, username, callback));
     }
 
-    private IEnumerator SignUpCoroutine(string email, string password, System.Action<bool, string> callback)
+    private IEnumerator SignUpCoroutine(string email, string password, string username, System.Action<bool, string> callback)
     {
         string userId = "";
         string url = $"{SUPABASE_URL}/auth/v1/signup";
-        var data = new { email, password };
+        var data = new { email, password, username };
         string json = JsonConvert.SerializeObject(data);
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
