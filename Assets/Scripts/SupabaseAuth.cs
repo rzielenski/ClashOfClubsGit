@@ -26,11 +26,12 @@ public class SupabaseAuth : MonoBehaviour
     {
         Scene currentScene = SceneManager.GetActiveScene();
         string sceneName = currentScene.name;
-#if !UNITY_EDITOR
-        TryBiometricLogin();
-#endif
+
         if (sceneName == "SignIn")
         {
+#if !UNITY_EDITOR
+            TryBiometricLogin();
+#endif
             signIn.onClick.AddListener(OnSignInClicked);
         }
         else if (sceneName == "SignUp")
@@ -46,8 +47,10 @@ public class SupabaseAuth : MonoBehaviour
             {
                 Debug.Log("Biometric authentication succeeded.");
 
-                string email = PlayerPrefs.GetString("email");
-                string password = PlayerPrefs.GetString("password");
+                string email = SecureStorage.Get("email");
+                string password = SecureStorage.Get("password");
+
+                statusText.text = "Biometric confirmed";
 
                 if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
                 {
@@ -58,15 +61,18 @@ public class SupabaseAuth : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("Email or password not found in PlayerPrefs.");
+                    Debug.LogWarning("Email or password not found in secure storage.");
+                    statusText.text = "Email/password not found.";
                 }
             },
             onFailure: () =>
             {
                 Debug.LogWarning("Biometric authentication failed.");
+                statusText.text = "Biometric authentication failed.";
             }
         );
     }
+
 
 
 
@@ -86,6 +92,8 @@ public class SupabaseAuth : MonoBehaviour
             statusText.text = message;
             if (success)
             {
+                SecureStorage.Set("email", email);
+                SecureStorage.Set("password", password);
                 PlayerPrefs.SetString("AuthToken", accessToken);
                 PlayerPrefs.SetString("UserId", email); // Using email as user ID for simplicity
                 SceneManager.LoadScene("ChooseAction");
@@ -207,7 +215,7 @@ public class SupabaseAuth : MonoBehaviour
                 yield break;
             }
 
-            Debug.Log("Login successful.");
+            statusText.text = "Login successful";
             var tokenResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(www.downloadHandler.text);
             Debug.Log(tokenResponse);
             string accessToken = tokenResponse["access_token"].ToString();
@@ -224,7 +232,7 @@ public class SupabaseAuth : MonoBehaviour
 
             Debug.Log("User ID fetched: " + userId);
             CourseManager.Instance.user.user_id = userId;
-
+            
 
             //callback?.Invoke(true, "Login successful", accessToken);
         }
@@ -238,7 +246,7 @@ public class SupabaseAuth : MonoBehaviour
         };
         string userJson = JsonConvert.SerializeObject(userData);
         yield return PostToSupabase(userUrl, userJson, "User", true);
-
+        statusText = "Login successful";
         // Insert Elo
         string eloUrl = $"{SUPABASE_URL}/rest/v1/PlayerEloRating";
         string[] matchTypes = { "solo", "duo", "squad", "legion" };
