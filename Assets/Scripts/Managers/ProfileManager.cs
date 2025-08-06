@@ -7,67 +7,18 @@ using Newtonsoft.Json;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public class CourseManager : MonoBehaviour
+public class ProfileManager : MonoBehaviour
 {
-    public static CourseManager Instance { get; private set; }
-    public Course SelectedCourse { get; set; }
-    public float CourseDistance { get; set; }
-    public Match curMatch = new Match();
-    public Clan SelectedClan { get; set; }
-    public List<int> holeScores = new List<int>();
-    public string roundType = "";
-
-    public User user = new User();
-    public string match_id = "";
-    public bool updated = false;
-
 
     private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/";
     private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
 
 
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // Persist across scenes
-        }
-        else
-        {
-            Destroy(gameObject); // Ensure only one instance exists
-        }
-    }
 
-    public void FinishRound()
+    void Start()
     {
-        int total_score = 0;
-        foreach (int score in holeScores)
-        {
-            total_score += score;
-        }
         
-        string url = $"https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers/user_id=eq.{user.user_id}&match_id={curMatch.match_id}";
-
-        var roundData = new Dictionary<string, object>
-        {
-            { "tee_id", SelectedCourse.tees.teebox_id },
-            { "strokes", total_score },
-            { "completed", true }
-        };
-
-        string jsonData = JsonConvert.SerializeObject(roundData);
-
-        StartCoroutine(PatchData(url, jsonData));
-
-        if (curMatch != null)
-        {
-
-        }
     }
-
-
-
 
     IEnumerator PostData(string url, string jsonData)
     {

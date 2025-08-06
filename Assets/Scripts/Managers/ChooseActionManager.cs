@@ -19,11 +19,22 @@ public class ChooseActionManager : MonoBehaviour
     public bool practice = false;
     public bool is_public = false;
     public Transform scrollView;
+    public Transform clanScrollView;
 
-    void Start()
+    void Awake()
     {
-        string savedData = File.ReadAllText(Path.Combine(Application.persistentDataPath, "saveData.json"));
-        GameData data = JsonConvert.DeserializeObject<GameData>(savedData);
+        string savedData = "";
+        GameData data = new GameData();
+        if (File.Exists(Path.Combine(Application.persistentDataPath, "saveData.json")))
+        {
+            savedData = File.ReadAllText(Path.Combine(Application.persistentDataPath, "saveData.json"));
+            data = JsonConvert.DeserializeObject<GameData>(savedData);
+        }
+        else
+        {
+            Debug.Log("No saved data found.");
+        }
+        
         if (data.match != null)
         {
 
@@ -56,8 +67,10 @@ public class ChooseActionManager : MonoBehaviour
                 CourseManager.Instance.updated = true;
                 SceneManager.LoadScene("Scorecard");
             });
-            
+
         }
+        APIHandler.Instance.GetUserClans();
+        APIHandler.Instance.GetLeaders();
     }
     public void togglePractice()
     {
@@ -138,13 +151,16 @@ public class ChooseActionManager : MonoBehaviour
 
     public void OpenCloseClan()
     {
+        RectTransform rt = clanPanel.gameObject.GetComponent<RectTransform>();
         if (clanPanel.activeInHierarchy)
         {
             clanPanel.SetActive(false);
+            clanScrollView.position = new Vector2(clanScrollView.position.x, clanScrollView.position.y + rt.sizeDelta.y);
         }
         else
         {
             clanPanel.SetActive(true);
+            clanScrollView.position = new Vector2(clanScrollView.position.x, clanScrollView.position.y - rt.sizeDelta.y);
         }
     }
 }

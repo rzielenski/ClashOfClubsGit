@@ -11,9 +11,6 @@ public class User
     public int total_wins;
     public int total_matches;
     public PlayerEloRating solo;
-    public PlayerEloRating duo;
-    public PlayerEloRating squad;
-    public PlayerEloRating legion;
 }
 [System.Serializable]
 public class PlayerEloRating

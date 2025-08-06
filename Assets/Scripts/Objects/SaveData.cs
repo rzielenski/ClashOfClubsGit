@@ -31,6 +31,9 @@ public class GameData
         scores = _scores;
         match = _match;
     }
+    public GameData()
+    {
+    }
 }
 
 public static class SecureStorage

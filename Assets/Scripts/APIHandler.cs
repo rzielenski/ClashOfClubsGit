@@ -15,6 +15,8 @@ public class APIHandler : MonoBehaviour
     private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
     public static APIHandler Instance { get; private set; }
     public GameObject courseButtonPrefab;
+    public GameObject clanButtonPrefab;
+    public GameObject eloPrefab;
     public GameObject teesButtonPrefab;
     public LocationData locationData;
 
@@ -31,6 +33,8 @@ public class APIHandler : MonoBehaviour
         }
     }
 
+
+    // -----------------  COURSE HELPER FUNCTIONS -----------------
     public void GetHoles(System.Action callback)
     {
         string id = CourseManager.Instance.SelectedCourse.tees.teebox_id;
@@ -44,7 +48,7 @@ public class APIHandler : MonoBehaviour
             }
 
             List<Hole> holes = JsonConvert.DeserializeObject<List<Hole>>(json);
-            
+
             CourseManager.Instance.SelectedCourse.tees.holes = holes;
             callback?.Invoke();
         }));
@@ -75,7 +79,7 @@ public class APIHandler : MonoBehaviour
                 buttonObj.transform.Find("TeeName").GetComponentInChildren<TextMeshProUGUI>().text = tee.name;
                 buttonObj.transform.Find("Yardage").GetComponentInChildren<TextMeshProUGUI>().text = tee.total_yards.ToString();
                 buttonObj.transform.Find("Par").GetComponentInChildren<TextMeshProUGUI>().text = tee.par.ToString();
-                
+
                 buttonObj.GetComponent<Button>().onClick.AddListener(() =>
                 {
                     Debug.Log("Making onclick");
@@ -83,6 +87,7 @@ public class APIHandler : MonoBehaviour
                     SceneManager.LoadScene("Scorecard");
                 });
             }
+            scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
         }));
     }
 
@@ -128,10 +133,11 @@ public class APIHandler : MonoBehaviour
                     SceneManager.LoadScene("SelectTees");
                 });
             }
+            scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
         }));
     }
 
-
+    // -----------------  MATCH HELPER FUNCTIONS -----------------
     public void GetBestMatch(int userElo, System.Action<Match> callback)
     {
         string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
@@ -168,30 +174,6 @@ public class APIHandler : MonoBehaviour
         
     }
 
-
-
-    IEnumerator GetRequest(string url, System.Action<string> callback)
-    {
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
-        {
-            www.SetRequestHeader("apikey", SUPABASE_API_KEY);
-            www.SetRequestHeader("Authorization", $"Bearer {SUPABASE_API_KEY}");
-            www.SetRequestHeader("Content-Type", "application/json");
-
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                callback?.Invoke(json);  // Pass JSON back via callback
-            }
-            else
-            {
-                Debug.LogError($"Supabase Error: {www.error}, Response: {www.downloadHandler.text}");
-                callback?.Invoke(null);  // Pass null or empty on failure
-            }
-        }
-    }
 
     public void CreateMatch(string match_type, string format, string name, bool is_public, bool is_practice)
     {
@@ -262,6 +244,103 @@ public class APIHandler : MonoBehaviour
 
         CourseManager.Instance.match_id = match_id;
     }
+
+
+
+    // -----------------  CLAN HELPER FUNCTIONS -----------------
+
+    public void GetUserClans()
+    {
+       
+        //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
+
+        string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}&select=*,Clans(*)";
+        StartCoroutine(GetRequest(url, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from search.");
+                return;
+            }
+            Debug.Log(json);
+            List<ClanJoinResponse> clans = JsonConvert.DeserializeObject<List<ClanJoinResponse>>(json);
+
+            Transform scrollView = GameObject.Find("ViewGroup").transform.Find("View2").Find("CurrentClans").Find("Viewport").Find("Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var clan in clans)
+            {
+                float _distance = 0;
+                GameObject buttonObj = Instantiate(clanButtonPrefab, scrollView);
+                buttonObj.transform.Find("ClanName").GetComponentInChildren<TextMeshProUGUI>().text = clan.Clans.name;
+
+                buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    CourseManager.Instance.SelectedClan = clan.Clans;
+                    SceneManager.LoadScene("ClanPage");
+                });
+            }
+        }));
+    }
+
+    public void GetLeaders()
+    {
+        string leadersurl = $"{APIHandler.Instance.SUPABASE_URL}PlayerEloRating?select=*,Users(*)&order=elo_rating.desc&limit=10";
+        StartCoroutine(GetRequest(leadersurl, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from leaders request.");
+                return;
+            }
+            
+            List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
+            //Transform scrollView = GameObject.FindWithTag("LeadersView").transform;
+            Transform scrollView = GameObject.Find("ViewGroup").transform.Find("View3").Find("CurrentLeaders").Find("Viewport").Find("Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var user in users)
+            {
+                GameObject buttonObj = Instantiate(eloPrefab, scrollView);
+                buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = user.username;
+                //buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = user.solo.elo_rating.ToString();
+                buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    CourseManager.Instance.user = user;
+                    SceneManager.LoadScene("Profile");
+                });
+            }
+            scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
+        }));
+    }
+    // -----------------  GENERIC SUPABASE REQUESTS -----------------
+
+        IEnumerator GetRequest(string url, System.Action<string> callback)
+    {
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            www.SetRequestHeader("apikey", SUPABASE_API_KEY);
+            www.SetRequestHeader("Authorization", $"Bearer {SUPABASE_API_KEY}");
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string json = www.downloadHandler.text;
+                callback?.Invoke(json);  // Pass JSON back via callback
+            }
+            else
+            {
+                Debug.LogError($"Supabase Error: {www.error}, Response: {www.downloadHandler.text}");
+                callback?.Invoke(null);  // Pass null or empty on failure
+            }
+        }
+    }
+
+    
     IEnumerator PostData(string url, string jsonData, System.Action<string> callback)
     {
         using (UnityWebRequest www = new UnityWebRequest(url, "POST"))

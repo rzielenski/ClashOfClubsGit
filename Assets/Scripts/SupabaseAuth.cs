@@ -246,37 +246,24 @@ public class SupabaseAuth : MonoBehaviour
         };
         string userJson = JsonConvert.SerializeObject(userData);
         yield return PostToSupabase(userUrl, userJson, "User", true);
-        statusText = "Login successful";
+        
         // Insert Elo
         string eloUrl = $"{SUPABASE_URL}/rest/v1/PlayerEloRating";
-        string[] matchTypes = { "solo", "duo", "squad", "legion" };
+        
         string user_id = CourseManager.Instance.user.user_id;
-        foreach (string type in matchTypes)
+        
+        var eloData = new Dictionary<string, object>
         {
-            var eloData = new Dictionary<string, object>
-            {
-                { "match_type", type },
-                { "user_id",  user_id},
-                { "elo_rating", 1200 }
-            };
-            string eloJson = JsonConvert.SerializeObject(eloData);
-            yield return PostToSupabase(eloUrl, eloJson, $"ELO for '{type}'", true);
-            switch (type)
-            {
-                case "solo":
-                    CourseManager.Instance.user.solo = new PlayerEloRating(type, user_id, 1200);
-                    break;
-                case "duo":
-                    CourseManager.Instance.user.duo = new PlayerEloRating(type, user_id, 1200);
-                    break;
-                case "squad":
-                    CourseManager.Instance.user.squad = new PlayerEloRating(type, user_id, 1200);
-                    break;
-                case "legion":
-                    CourseManager.Instance.user.legion = new PlayerEloRating(type, user_id, 1200);
-                    break;
-            }
-        }
+            { "match_type", "solo" },
+            { "user_id",  user_id},
+            { "elo_rating", 1200 }
+        };
+        string eloJson = JsonConvert.SerializeObject(eloData);
+        yield return PostToSupabase(eloUrl, eloJson, $"ELO for solo", true);
+        
+        CourseManager.Instance.user.solo = new PlayerEloRating("solo", user_id, 1200);
+
+        
         SceneManager.LoadScene("ChooseAction");
     }
 
