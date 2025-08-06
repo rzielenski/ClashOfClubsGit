@@ -10,17 +10,20 @@ using UnityEngine.SceneManagement;
 public class CourseManager : MonoBehaviour
 {
     public static CourseManager Instance { get; private set; }
-    public Course SelectedCourse { get; set; } // Store the selected Course object
-    public float CourseDistance { get; set; } // Store the distance from LocationData
+    public Course SelectedCourse { get; set; }
+    public float CourseDistance { get; set; }
+    public Match curMatch = new Match();
     public List<int> holeScores = new List<int>();
     public string roundType = "";
-    public string user_id = "";
+   
+    public User user = new User();
     public string match_id = "";
+    public bool updated = false;
 
 
     private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/";
     private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
-    
+
 
     void Awake()
     {
@@ -37,10 +40,6 @@ public class CourseManager : MonoBehaviour
 
     public void FinishRound()
     {
-        StartCoroutine(AddRound());
-    }
-    IEnumerator AddRound()
-    {
         int total_score = 0;
         foreach (int score in holeScores)
         {
@@ -50,7 +49,7 @@ public class CourseManager : MonoBehaviour
 
         var roundData = new Dictionary<string, object>
         {
-            { "user_id", user_id },
+            { "user_id", user.user_id },
             { "course_id", SelectedCourse.course_id },
             { "total_score", total_score },
             { "hole_scores", holeScores },
@@ -62,6 +61,14 @@ public class CourseManager : MonoBehaviour
 
         string jsonData = JsonConvert.SerializeObject(roundData);
 
+        StartCoroutine(PostData(url, jsonData));
+    }
+
+
+
+
+    IEnumerator PostData(string url, string jsonData)
+    {
         using (UnityWebRequest www = new UnityWebRequest(url, "POST"))
         {
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -76,19 +83,12 @@ public class CourseManager : MonoBehaviour
             if (www.result == UnityWebRequest.Result.Success || www.responseCode == 201)
             {
                 Debug.Log("Round inserted successfully.");
-                Debug.Log(roundData);
                 Debug.Log(www.downloadHandler.text);  // Optional: show inserted data
             }
             else
             {
-                Debug.LogError($"Failed to insert round: {www.error}, Response: {www.downloadHandler.text}");
+                Debug.LogError($"Failed to insert: {www.error}, Response: {www.downloadHandler.text}");
             }
         }
-    }
-
-
-    public void SetRoundType(string type)
-    {
-        roundType = type;
     }
 }

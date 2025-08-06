@@ -1,0 +1,103 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "TopLevel",
+    "printedName": "TopLevel",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "Biometrics"
+      },
+      {
+        "kind": "Import",
+        "name": "LocalAuthentication",
+        "printedName": "LocalAuthentication",
+        "declKind": "Import",
+        "moduleName": "Biometrics"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "BiometricsPlugin",
+        "printedName": "BiometricsPlugin",
+        "children": [
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "BiometricsPlugin",
+                "printedName": "Biometrics.BiometricsPlugin",
+                "usr": "s:10Biometrics0A6PluginC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:10Biometrics0A6PluginCACycfc",
+            "mangledName": "$s10Biometrics0A6PluginCACycfc",
+            "moduleName": "Biometrics",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "authenticate",
+            "printedName": "authenticate()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:10Biometrics0A6PluginC12authenticateSbyF",
+            "mangledName": "$s10Biometrics0A6PluginC12authenticateSbyF",
+            "moduleName": "Biometrics",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:10Biometrics0A6PluginC",
+        "mangledName": "$s10Biometrics0A6PluginC",
+        "moduleName": "Biometrics",
+        "declAttributes": [
+          "AccessControl"
+        ]
+      },
+      {
+        "kind": "Function",
+        "name": "Authenticate",
+        "printedName": "Authenticate()",
+        "children": [
+          {
+            "kind": "TypeNominal",
+            "name": "Bool",
+            "printedName": "Swift.Bool",
+            "usr": "s:Sb"
+          }
+        ],
+        "declKind": "Func",
+        "usr": "c:(cm)Authenticate",
+        "mangledName": "$s10Biometrics12AuthenticateSbyF",
+        "moduleName": "Biometrics",
+        "declAttributes": [
+          "AccessControl",
+          "CDecl"
+        ],
+        "funcSelfKind": "NonMutating"
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": []
+}

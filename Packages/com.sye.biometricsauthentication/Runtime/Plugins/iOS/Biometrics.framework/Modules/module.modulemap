@@ -1,0 +1,6 @@
+framework module Biometrics {
+  umbrella header "Biometrics.h"
+  export *
+
+  module * { export * }
+}

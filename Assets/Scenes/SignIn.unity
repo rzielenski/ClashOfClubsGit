@@ -418,10 +418,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f65f890c0679bb478f6110502d8523a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  curMatch:
+    match_id: 
+    match_type: 
+    format: 
+    complete: 0
+    stream_url: 
+    name: 
+    is_public: 0
   holeScores: 
   roundType: 
-  user_id: 
+  user:
+    user_id: 
+    username: 
+    gem_balance: 0
+    total_wins: 0
+    total_matches: 0
+    solo:
+      match_type: 
+      user_id: 
+      elo_rating: 0
+    duo:
+      match_type: 
+      user_id: 
+      elo_rating: 0
+    squad:
+      match_type: 
+      user_id: 
+      elo_rating: 0
+    legion:
+      match_type: 
+      user_id: 
+      elo_rating: 0
   match_id: 
+  updated: 0
 --- !u!4 &168473629
 Transform:
   m_ObjectHideFlags: 0

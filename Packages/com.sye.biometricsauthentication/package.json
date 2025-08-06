@@ -1,0 +1,26 @@
+{
+  "name": "com.sye.biometricsauthentication",
+  "version": "1.0.2",
+  "displayName": "Biometrics Authentication",
+  "description": "Biometrics Authentication is a Unity plugin developed by Simple yet Efficient (SyE) that allows you to seamlessly integrate biometric authentication into your Unity projects. Whether you need to implement Face ID, Touch ID, Android Biometrics, or other forms of biometric security, this plugin provides a simple yet efficient solution. With support for iOS, macOS, Android, and WebGL, Biometrics Authentication ensures cross-platform compatibility, making it ideal for a wide range of applications. The plugin is easy to set up and use, allowing you to authenticate users with just a few lines of code. Perfect for developers looking to enhance the security of their apps while maintaining a streamlined development process.",
+  "keywords": [
+    "biometrics",
+    "authentication",
+    "touchID",
+    "faceID",
+    "passkey"
+  ],
+  "author": {
+    "name": "Simple yet Efficient",
+    "email": "aqaddora96@gmail.com",
+    "url": "https://github.com/simple-yet-efficient/biometrics-authentication"
+  },
+  "samples": [
+    {
+      "displayName": "Biometrics Authentication Sample",
+      "description": "Import to see a complete example of impleminting Biometrics Authentication in your project",
+      "path": "Samples~"
+    }
+  ],
+  "type": "library"
+}
