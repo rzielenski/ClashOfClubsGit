@@ -18,6 +18,8 @@ public class CourseManager : MonoBehaviour
     public string roundType = "";
 
     public User user = new User();
+    public int user_elo;
+
     public string match_id = "";
     public bool updated = false;
 

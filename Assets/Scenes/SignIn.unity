@@ -438,6 +438,18 @@ MonoBehaviour:
       match_type: 
       user_id: 
       elo_rating: 0
+    duo:
+      match_type: 
+      user_id: 
+      elo_rating: 0
+    squad:
+      match_type: 
+      user_id: 
+      elo_rating: 0
+    legion:
+      match_type: 
+      user_id: 
+      elo_rating: 0
   match_id: 
   updated: 0
 --- !u!4 &168473629
@@ -975,8 +987,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   courseButtonPrefab: {fileID: 2663928384262644876, guid: 4aa8cb02f2d655342b909a1a0b083a52, type: 3}
-  clanButtonPrefab: {fileID: 2663928384262644876, guid: bb9479897ce013049b9fd143adec2d21, type: 3}
-  eloPrefab: {fileID: 2663928384262644876, guid: d305f60a2a76708469c7bdaf79c83565, type: 3}
+  clanButtonPrefab: {fileID: 2663928384262644876, guid: 82399b79e88c0e54a9d35cca45949f4f, type: 3}
+  eloPrefab: {fileID: 2663928384262644876, guid: 60ccf2752d45a374ba1e399f44305fb9, type: 3}
   teesButtonPrefab: {fileID: 2663928384262644876, guid: 60500aab45c7f49478945cabe513006a, type: 3}
   locationData: {fileID: 1603841997}
 --- !u!4 &778181501

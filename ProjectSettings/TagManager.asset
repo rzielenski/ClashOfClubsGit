@@ -11,8 +11,6 @@ TagManager:
   - CourseSearchInput
   - CoursesView
   - TeesView
-  - ClansView
-  - LeadersView
   layers:
   - Default
   - TransparentFX

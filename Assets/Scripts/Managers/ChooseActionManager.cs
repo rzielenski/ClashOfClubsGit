@@ -13,13 +13,17 @@ public class ChooseActionManager : MonoBehaviour
     public GameObject matchPrefab;
     public GameObject matchPanel;
     public GameObject clanPanel;
-    public TMP_InputField input;
-    public string type = "solo";
-    public string format = "stroke";
-    public bool practice = false;
-    public bool is_public = false;
+    public TMP_InputField matchNameInput;
+    public TMP_InputField clanNameInput;
     public Transform scrollView;
     public Transform clanScrollView;
+
+    public string matchFormat;
+    public bool practiceMatch = false;
+    public bool publicMatch = true;
+    public bool publicClan = true;
+
+    public int clanMaxPlayers;
 
     void Awake()
     {
@@ -72,33 +76,40 @@ public class ChooseActionManager : MonoBehaviour
         APIHandler.Instance.GetUserClans();
         APIHandler.Instance.GetLeaders();
     }
-    public void togglePractice()
+    public void toggleMatchPractice()
     {
-        practice = !practice;
+        practiceMatch = !practiceMatch;
     }
-    public void togglePublic()
+
+    public void toggleMatchPublic()
     {
-        is_public = !is_public;
+        publicMatch = !publicMatch;
+    }
+    public void toggleClanPublic()
+    {
+        publicClan = !publicClan;
     }
     public void Stroke(bool x)
     {
         if (x)
         {
-            format = "stroke";
+            matchFormat = "stroke";
         }
         else
         {
-            format = "scramble";
+            matchFormat = "scramble";
         }
     }
-    public void Stroke()
+
+    public void ClanSize(int size)
     {
-        format = "stroke";
+        clanMaxPlayers = size;
     }
     public void CreateMatch(string nameOverride = "")
     {
+        string type = "";
         string name = "";
-        if (practice)
+        if (practiceMatch)
         {
             type = "practice";
         }
@@ -110,17 +121,17 @@ public class ChooseActionManager : MonoBehaviour
         }
         else
         {
-            name = input.text;
+            name = matchNameInput.text;
         }
         CourseManager.Instance.roundType = type;
         CourseManager.Instance.updated = false;
-        APIHandler.Instance.CreateMatch(type, format, name, is_public, practice);
+        APIHandler.Instance.CreateMatch(type, matchFormat, name, publicMatch, practiceMatch);
         SceneManager.LoadScene("SelectCourse");
     }
 
     public void FindMatch()
     {
-        APIHandler.Instance.GetBestMatch(CourseManager.Instance.user.solo.elo_rating, match =>
+        APIHandler.Instance.GetBestMatch(CourseManager.Instance.user.user_id, match =>
         {
             if (match != null)
             {
@@ -134,6 +145,34 @@ public class ChooseActionManager : MonoBehaviour
             }
         });
     }
+
+    public void CreateClan(string nameOverride = "")
+    {
+        string name = "";
+        string type = "";
+        if (clanMaxPlayers == 2) { type = "duo"; }
+        else if (clanMaxPlayers == 4) { type = "squad"; }
+        else { type = "squad"; }
+
+        if (nameOverride != "")
+        {
+            name = nameOverride;
+        }
+        else
+        {
+            name = clanNameInput.text;
+        }
+        
+        APIHandler.Instance.CreateClan(type, name, publicClan);
+        SceneManager.LoadScene("Clans");
+    }
+
+    public void FindClan()
+    {
+        
+    }
+
+
     public void OpenCloseMatch()
     {
         RectTransform rt = matchPanel.gameObject.GetComponent<RectTransform>();

@@ -7,10 +7,11 @@ public class User
 {
     public string user_id;
     public string username;
-    public int gem_balance;
+    public string email;
+    public string created_at;
+    public int gems_balance;
     public int total_wins;
     public int total_matches;
-    public PlayerEloRating solo;
 }
 [System.Serializable]
 public class PlayerEloRating
@@ -25,4 +26,14 @@ public class PlayerEloRating
         user_id = uid;
         elo_rating = r;
     }
+}
+
+[System.Serializable]
+public class UserEloResponse
+{
+    public string match_type;
+    public string created_at;
+    public int elo_rating;
+    public string user_id;
+    public User Users;
 }

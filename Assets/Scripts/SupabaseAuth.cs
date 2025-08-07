@@ -261,9 +261,6 @@ public class SupabaseAuth : MonoBehaviour
         string eloJson = JsonConvert.SerializeObject(eloData);
         yield return PostToSupabase(eloUrl, eloJson, $"ELO for solo", true);
         
-        CourseManager.Instance.user.solo = new PlayerEloRating("solo", user_id, 1200);
-
-        
         SceneManager.LoadScene("ChooseAction");
     }
 
