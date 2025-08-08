@@ -135,7 +135,7 @@ public class ChooseActionManager : MonoBehaviour
         {
             if (match != null)
             {
-                APIHandler.Instance.CreateMatchPlayer(match.match_id);
+                APIHandler.Instance.CreateMatchPlayer(match);
                 CourseManager.Instance.updated = false;
                 SceneManager.LoadScene("SelectCourse");
             }

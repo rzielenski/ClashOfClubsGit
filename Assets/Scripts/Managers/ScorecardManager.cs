@@ -56,7 +56,7 @@ public class ScorecardManager : MonoBehaviour
             
             int tempCount = count;
             GameObject holeObj = Instantiate(holePrefab, panel);
-            holeObj.transform.Find("HoleNum").gameObject.GetComponent<TextMeshProUGUI>().text = count.ToString();
+            holeObj.transform.Find("HoleNum").gameObject.GetComponent<TextMeshProUGUI>().text = "Hole\n" + count.ToString();
             int par = hole?.par ?? 4;
             int yards = hole?.yardage ?? 0;
             int handicap = hole?.handicap ?? 0;

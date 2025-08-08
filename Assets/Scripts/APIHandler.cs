@@ -210,19 +210,21 @@ public class APIHandler : MonoBehaviour
                 }
 
                 Match match = matches[0];
-                
+
                 string newurl = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers";
 
                 var matchPlayerData = new Dictionary<string, object>
                 {
                     { "match_id", match.match_id },
-                    { "user_id", CourseManager.Instance.user.user_id }
+                    { "user_id", CourseManager.Instance.user.user_id },
+                    { "side", 1 }
                 };
 
                 string newJsonData = JsonConvert.SerializeObject(matchPlayerData);
                 StartCoroutine(PostData(newurl, newJsonData, json => { }));
 
-                CourseManager.Instance.match_id = match.match_id;
+                CourseManager.Instance.curMatch = match;
+                Debug.Log($"Created match with ID: {match.match_id}");
             }
             catch (System.Exception e)
             {
@@ -231,20 +233,21 @@ public class APIHandler : MonoBehaviour
         }));
     }
 
-    public void CreateMatchPlayer(string match_id)
+    public void CreateMatchPlayer(Match match)
     {
         string newurl = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers";
 
         var matchPlayerData = new Dictionary<string, object>
         {
-            { "match_id", match_id },
-            { "user_id", CourseManager.Instance.user.user_id }
+            { "match_id", match.match_id },
+            { "user_id", CourseManager.Instance.user.user_id },
+            { "side" , 2}
         };
 
         string newJsonData = JsonConvert.SerializeObject(matchPlayerData);
         StartCoroutine(PostData(newurl, newJsonData, json => { }));
 
-        CourseManager.Instance.match_id = match_id;
+        CourseManager.Instance.curMatch = match;
     }
 
 

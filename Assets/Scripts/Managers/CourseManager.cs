@@ -20,7 +20,6 @@ public class CourseManager : MonoBehaviour
     public User user = new User();
     public int user_elo;
 
-    public string match_id = "";
     public bool updated = false;
 
 
@@ -49,8 +48,9 @@ public class CourseManager : MonoBehaviour
             total_score += score;
         }
         
-        string url = $"https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers/user_id=eq.{user.user_id}&match_id={curMatch.match_id}";
+        string url = $"https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers?user_id=eq.{user.user_id}&match_id=eq.{curMatch.match_id}";
 
+        Debug.Log(url);
         var roundData = new Dictionary<string, object>
         {
             { "tee_id", SelectedCourse.tees.teebox_id },
@@ -59,13 +59,9 @@ public class CourseManager : MonoBehaviour
         };
 
         string jsonData = JsonConvert.SerializeObject(roundData);
-
+        Debug.Log(jsonData);
         StartCoroutine(PatchData(url, jsonData));
 
-        if (curMatch != null)
-        {
-
-        }
     }
 
 
