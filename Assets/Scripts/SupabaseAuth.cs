@@ -134,8 +134,15 @@ public class SupabaseAuth : MonoBehaviour
     {
         string userId = "";
         string url = $"{SUPABASE_URL}/auth/v1/signup";
-        var data = new { email, password, username };
-        string json = JsonConvert.SerializeObject(data);
+        Debug.Log($"Signing up with email: {email}, username: {username}");
+        var payload = new
+        {
+            email,
+            password,
+            // This is the important part:
+            data = new { display_name = username }   // will show up under user_metadata
+        };
+        string json = JsonConvert.SerializeObject(payload);
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
         {
@@ -146,15 +153,27 @@ public class SupabaseAuth : MonoBehaviour
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                //var response = JsonConvert.DeserializeObject<Dictionary<string, object>>(www.downloadHandler.text);
                 var response = JObject.Parse(www.downloadHandler.text);
                 userId = response["user"]?["id"]?.ToString();
-                
+
                 SecureStorage.Set("email", email);
                 SecureStorage.Set("password", password);
 
-                callback?.Invoke(true, "Sign-up successful. Check your email for confirmation.");
+                // Insert into Users table with username
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    string userUrl = $"{SUPABASE_URL}/rest/v1/Users";
+                    var userData = new Dictionary<string, object>
+                    {
+                        { "user_id", userId },
+                        { "email", email },
+                        { "username", username }
+                    };
+                    string userJson = JsonConvert.SerializeObject(userData);
+                    yield return PostToSupabase(userUrl, userJson, "User", true);
+                }
 
+                callback?.Invoke(true, "Sign-up successful. Check your email for confirmation.");
             }
             else
             {
@@ -174,9 +193,6 @@ public class SupabaseAuth : MonoBehaviour
                 callback?.Invoke(false, $"Sign-up failed: {errorMessage}");
             }
         }
-
-
-
     }
 
     public void SignIn(string email, string password, System.Action<bool, string, string> callback)
@@ -232,6 +248,7 @@ public class SupabaseAuth : MonoBehaviour
 
             Debug.Log("User ID fetched: " + userId);
             CourseManager.Instance.user.user_id = userId;
+            CourseManager.Instance.user.username = userId;
             
 
             //callback?.Invoke(true, "Login successful", accessToken);

@@ -144,10 +144,11 @@ public class APIHandler : MonoBehaviour
         string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
         var requestBody = new Dictionary<string, object>
         {
-            { "user_id", user_id }
+            { "p_user_id", user_id },
+            { "p_match_type", "solo" }
         };
         string jsonData = JsonConvert.SerializeObject(requestBody);
-
+        Debug.Log($"Requesting best match for user {user_id} with data: {jsonData}");
         StartCoroutine(PostData(url, jsonData, (responseJson) =>
         {
             if (string.IsNullOrEmpty(responseJson))

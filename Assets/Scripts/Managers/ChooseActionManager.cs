@@ -107,7 +107,7 @@ public class ChooseActionManager : MonoBehaviour
     }
     public void CreateMatch(string nameOverride = "")
     {
-        string type = "";
+        string type = "solo";
         string name = "";
         if (practiceMatch)
         {
