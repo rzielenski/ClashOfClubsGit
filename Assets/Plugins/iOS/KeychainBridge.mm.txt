@@ -1,0 +1,58 @@
+#import <Foundation/Foundation.h>
+#import <Security/Security.h>
+
+static NSString* ServiceName() {
+    return [[NSBundle mainBundle] bundleIdentifier] ?: @"com.company.app";
+}
+
+static NSDictionary* BaseQuery(NSString* account) {
+    return @{
+        (__bridge id)kSecClass: (__bridge id)kSecClassGenericPassword,
+        (__bridge id)kSecAttrService: ServiceName(),
+        (__bridge id)kSecAttrAccount: account,
+    };
+}
+
+extern "C" bool keychain_set(const char* ckey, const char* cval)
+{
+    @autoreleasepool {
+        NSString* account = [NSString stringWithUTF8String:ckey ?: ""];
+        NSData* value = [NSData dataWithBytes:cval length:strlen(cval)];
+        NSMutableDictionary* q = [BaseQuery(account) mutableCopy];
+
+        SecItemDelete((__bridge CFDictionaryRef)q); // upsert
+        q[(__bridge id)kSecValueData] = value;
+        q[(__bridge id)kSecAttrAccessible] = (__bridge id)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly;
+
+        OSStatus status = SecItemAdd((__bridge CFDictionaryRef)q, NULL);
+        return status == errSecSuccess;
+    }
+}
+
+extern "C" const char* keychain_get(const char* ckey)
+{
+    @autoreleasepool {
+        NSString* account = [NSString stringWithUTF8String:ckey ?: ""];
+        NSMutableDictionary* q = [BaseQuery(account) mutableCopy];
+        q[(__bridge id)kSecReturnData] = @YES;
+        q[(__bridge id)kSecMatchLimit] = (__bridge id)kSecMatchLimitOne;
+
+        CFTypeRef dataRef = NULL;
+        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)q, &dataRef);
+        if (status != errSecSuccess || !dataRef) return NULL;
+
+        NSData* data = (__bridge_transfer NSData*)dataRef;
+        NSString* s = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        return s ? strdup([s UTF8String]) : NULL;
+    }
+}
+
+extern "C" bool keychain_delete(const char* ckey)
+{
+    @autoreleasepool {
+        NSString* account = [NSString stringWithUTF8String:ckey ?: ""];
+        NSDictionary* q = BaseQuery(account);
+        OSStatus status = SecItemDelete((__bridge CFDictionaryRef)q);
+        return (status == errSecSuccess || status == errSecItemNotFound);
+    }
+}
