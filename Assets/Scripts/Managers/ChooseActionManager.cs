@@ -38,7 +38,7 @@ public class ChooseActionManager : MonoBehaviour
         {
             Debug.Log("No saved data found.");
         }
-        
+
         if (data.match != null)
         {
 
@@ -162,14 +162,14 @@ public class ChooseActionManager : MonoBehaviour
         {
             name = clanNameInput.text;
         }
-        
+
         APIHandler.Instance.CreateClan(type, name, publicClan);
         SceneManager.LoadScene("Clans");
     }
 
     public void FindClan()
     {
-        
+
     }
 
 
@@ -201,5 +201,10 @@ public class ChooseActionManager : MonoBehaviour
             clanPanel.SetActive(true);
             clanScrollView.position = new Vector2(clanScrollView.position.x, clanScrollView.position.y - rt.sizeDelta.y);
         }
+    }
+
+    public void GetFinds()
+    {
+        APIHandler.Instance.GetTopFinds();
     }
 }

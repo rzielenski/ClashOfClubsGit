@@ -431,26 +431,12 @@ MonoBehaviour:
   user:
     user_id: 
     username: 
-    gem_balance: 0
+    email: 
+    created_at: 
+    gems_balance: 0
     total_wins: 0
     total_matches: 0
-    solo:
-      match_type: 
-      user_id: 
-      elo_rating: 0
-    duo:
-      match_type: 
-      user_id: 
-      elo_rating: 0
-    squad:
-      match_type: 
-      user_id: 
-      elo_rating: 0
-    legion:
-      match_type: 
-      user_id: 
-      elo_rating: 0
-  match_id: 
+  user_elo: 0
   updated: 0
 --- !u!4 &168473629
 Transform:
@@ -991,6 +977,7 @@ MonoBehaviour:
   eloPrefab: {fileID: 2663928384262644876, guid: 60ccf2752d45a374ba1e399f44305fb9, type: 3}
   teesButtonPrefab: {fileID: 2663928384262644876, guid: 60500aab45c7f49478945cabe513006a, type: 3}
   locationData: {fileID: 1603841997}
+  findImageItemPrefab: {fileID: 4511243597584337160, guid: ffb5f57dae1bf0240b5f7628ba420442, type: 3}
 --- !u!4 &778181501
 Transform:
   m_ObjectHideFlags: 0
@@ -1221,6 +1208,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f92d1437e56bdd845aa8e6e89809350c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SUPABASE_URL: https://erqsrecsciorigewaihr.supabase.co
+  SUPABASE_API_KEY: <YOUR ANON KEY>
   emailInput: {fileID: 1733050942447881873}
   passwordInput: {fileID: 1682540854}
   userInput: {fileID: 0}
@@ -1462,7 +1451,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d2e14589f472ac644a6962717799c835, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 824b116f58c8de7409136b70cdc48e3e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

@@ -12,6 +12,12 @@ using TMPro;
 
 public class APIHandler : MonoBehaviour
 {
+    [System.Serializable]
+    public class StorageListItem {
+        public string name;
+        public string created_at;
+    }
+
     private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/";
     private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
     public static APIHandler Instance { get; private set; }
@@ -20,6 +26,7 @@ public class APIHandler : MonoBehaviour
     public GameObject eloPrefab;
     public GameObject teesButtonPrefab;
     public LocationData locationData;
+    public GameObject findImageItemPrefab;
 
     void Awake()
     {
@@ -250,13 +257,75 @@ public class APIHandler : MonoBehaviour
         CourseManager.Instance.curMatch = match;
     }
 
+    // -----------------  FINDS HELPER FUNCTIONS -----------------
+    
+    public void GetTopFinds()
+    {
+        string url = "https://erqsrecsciorigewaihr.supabase.co/storage/v1/object/list/finds";
+        var payload = new {
+            prefix = "", // or "your_subfolder/" if needed
+            limit = 10,
+            offset = 0,
+            sortBy = new { column = "created_at", order = "desc" }
+        };
+        string body = JsonConvert.SerializeObject(payload);
+        StartCoroutine(PostJson(url, body, (ok, json) =>
+        {
+            if (!ok || string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("Failed to list files");
+                return;
+            }
 
+            var items = JsonConvert.DeserializeObject<List<StorageListItem>>(json);
+            Transform content = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View4/ScrollView/Viewport/Content");
+            foreach (Transform child in content) Destroy(child.gameObject);
+
+            foreach (var it in items)
+            {
+                string publicUrl = $"https://erqsrecsciorigewaihr.supabase.co/storage/v1/object/public/finds/{it.name}";
+                GameObject go = Instantiate(findImageItemPrefab, content);
+                var raw = go.GetComponentInChildren<UnityEngine.UI.RawImage>();
+                StartCoroutine(LoadImage(publicUrl, tex => { if (raw) raw.texture = tex; }));
+            }
+
+            content.GetComponent<RectTransform>().sizeDelta = new Vector2(content.GetComponent<RectTransform>().sizeDelta.x, content.childCount * 900);
+        }));
+    }
+    private IEnumerator PostJson(string url, string json, System.Action<bool,string> cb)
+    {
+        using var req = new UnityWebRequest(url, "POST");
+        req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(json));
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+        req.SetRequestHeader("apikey", SUPABASE_API_KEY);
+        req.SetRequestHeader("Authorization", $"Bearer {SUPABASE_API_KEY}");
+
+        yield return req.SendWebRequest();
+
+        var body = req.downloadHandler?.text;
+        if (req.result == UnityWebRequest.Result.Success)
+            cb(true, body);
+        else
+        {
+            Debug.LogError($"List failed: {req.responseCode} {req.error} | {body}");
+            cb(false, null);
+        }
+    }
+
+
+    private IEnumerator LoadImage(string url, System.Action<Texture2D> cb)
+    {
+        using var www = UnityWebRequestTexture.GetTexture(url);
+        yield return www.SendWebRequest();
+        cb(www.result == UnityWebRequest.Result.Success ? DownloadHandlerTexture.GetContent(www) : null);
+    }
 
     // -----------------  CLAN HELPER FUNCTIONS -----------------
 
     public void GetUserClans()
     {
-       
+
         //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
 
         string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}&select=*,Clans(*)";

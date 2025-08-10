@@ -418,10 +418,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f65f890c0679bb478f6110502d8523a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  curMatch:
+    match_id: 
+    match_type: 
+    format: 
+    complete: 0
+    stream_url: 
+    name: 
+    is_public: 0
   holeScores: 
   roundType: 
-  user_id: 
-  match_id: 
+  user:
+    user_id: 
+    username: 
+    email: 
+    created_at: 
+    gems_balance: 0
+    total_wins: 0
+    total_matches: 0
+  user_elo: 0
+  updated: 0
 --- !u!4 &168473629
 Transform:
   m_ObjectHideFlags: 0
@@ -1121,6 +1137,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   courseButtonPrefab: {fileID: 3233485351319438983, guid: 4aa8cb02f2d655342b909a1a0b083a52, type: 3}
+  clanButtonPrefab: {fileID: 0}
+  eloPrefab: {fileID: 0}
   teesButtonPrefab: {fileID: 3233485351319438983, guid: cd2af1d0f85540b4f81a618b6f2acba8, type: 3}
   locationData: {fileID: 1603841997}
 --- !u!4 &778181501
@@ -1530,14 +1548,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.3490566, g: 0.3474101, b: 0.3474101, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d2e14589f472ac644a6962717799c835, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c4bf77578aaff9d4d92e961e39acaaf9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1599,6 +1617,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f92d1437e56bdd845aa8e6e89809350c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SUPABASE_URL: https://erqsrecsciorigewaihr.supabase.co
+  SUPABASE_API_KEY: <YOUR ANON KEY>
   emailInput: {fileID: 1733050942447881873}
   passwordInput: {fileID: 1682540854}
   userInput: {fileID: 1392326783}
@@ -2322,7 +2342,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d2e14589f472ac644a6962717799c835, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 824b116f58c8de7409136b70cdc48e3e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

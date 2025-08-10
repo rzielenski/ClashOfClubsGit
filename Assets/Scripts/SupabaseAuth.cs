@@ -12,11 +12,11 @@ using SyE.BiometricsAuthentication;
 
 public class SupabaseAuth : MonoBehaviour
 {
-    [Header("Supabase")]
-    [SerializeField] private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
-    [SerializeField] private string SUPABASE_API_KEY = "<YOUR ANON KEY>"; // fill in Inspector
+    
+    private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
+    private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
 
-    [Header("UI")]
+    
     public TMP_InputField emailInput;
     public TMP_InputField passwordInput;
     public TMP_InputField userInput;
