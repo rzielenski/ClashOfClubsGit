@@ -172,6 +172,11 @@ public class ChooseActionManager : MonoBehaviour
 
     }
 
+    public void UserClans()
+    {
+        APIHandler.Instance.GetUserClans();
+    }
+
 
     public void OpenCloseMatch()
     {

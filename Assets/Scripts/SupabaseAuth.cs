@@ -69,16 +69,16 @@ public class SupabaseAuth : MonoBehaviour
                         SecureStorage.Set("refresh_token", refreshOut);
 
                     // Fetch user and go
-                    StartCoroutine(GetUserInfo(access, userId =>
+                    StartCoroutine(GetUserInfo(access, user =>
                     {
-                        if (string.IsNullOrEmpty(userId))
+                        if (user == null)
                         {
                             statusText.text = "Failed to fetch user.";
                             return;
                         }
 
                         // Set your app's user state
-                        CourseManager.Instance.user.user_id = userId;
+                        CourseManager.Instance.user = user;
                         // Optionally fetch/set username here
 
                         SceneManager.LoadScene("ChooseAction");
@@ -115,18 +115,18 @@ public class SupabaseAuth : MonoBehaviour
                 SecureStorage.Set("refresh_token", refresh);
 
             // Fetch user id and do initial upserts
-            StartCoroutine(GetUserInfo(access, userId =>
+            StartCoroutine(GetUserInfo(access, user =>
             {
-                if (string.IsNullOrEmpty(userId))
+                if (user == null)
                 {
-                    statusText.text = "Failed to fetch user ID";
+                    statusText.text = "Failed to fetch user";
                     return;
                 }
 
-                CourseManager.Instance.user.user_id = userId;
+                CourseManager.Instance.user = user;
 
                 // Upsert minimal profile & Elo using USER token (RLS-friendly)
-                StartCoroutine(UpsertsAfterLogin(access, userId, email, () =>
+                StartCoroutine(UpsertsAfterLogin(access, user.user_id, user.email, () =>
                 {
                     SceneManager.LoadScene("ChooseAction");
                 }));
@@ -248,7 +248,7 @@ public class SupabaseAuth : MonoBehaviour
         }
     }
 
-    private IEnumerator GetUserInfo(string accessToken, Action<string> onUserId)
+    private IEnumerator GetUserInfo(string accessToken, Action<User> onUser)
     {
         string url = $"{SUPABASE_URL}/auth/v1/user";
         using var req = UnityWebRequest.Get(url);
@@ -258,16 +258,47 @@ public class SupabaseAuth : MonoBehaviour
 
         yield return req.SendWebRequest();
 
-        if (req.result == UnityWebRequest.Result.Success)
+        if (req.result != UnityWebRequest.Result.Success)
         {
-            var result = JObject.Parse(req.downloadHandler.text);
-            string userId = result["id"]?.ToString();
-            onUserId?.Invoke(userId);
+        	onUser?.Invoke(null);
         }
-        else
+        var auth = JObject.Parse(req.downloadHandler.text);
+        string userId = auth["id"]?.ToString();
+        string email  = auth["email"]?.ToString();
+        string display = auth["user_metadata"]?["display_name"]?.ToString();
+
+        // 2) App user row (RLS-friendly: use the SAME bearer token)
+        string userUrl = $"{SUPABASE_URL}/rest/v1/Users?user_id=eq.{userId}&select=*";
+        using (var req2 = UnityWebRequest.Get(userUrl))
         {
-            Debug.LogError("Failed to get user: " + ExtractMsg(req));
-            onUserId?.Invoke(null);
+            req2.downloadHandler = new DownloadHandlerBuffer();
+            req2.SetRequestHeader("Authorization", $"Bearer {accessToken}");
+            req2.SetRequestHeader("apikey", SUPABASE_API_KEY);
+            yield return req2.SendWebRequest();
+
+            if (req2.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Users row fetch failed: " + ExtractMsg(req2));
+                onUser?.Invoke(null);
+                yield break;
+            }
+
+            // The REST endpoint returns a JSON array
+            var arr = JArray.Parse(req2.downloadHandler.text);
+            if (arr.Count > 0)
+            {
+                var user = arr[0].ToObject<User>(); // your model from User.cs
+                onUser?.Invoke(user);
+            }
+            else
+            {
+                // If row doesn't exist yet, return a minimal object (or upsert one)
+                onUser?.Invoke(new User {
+                    user_id = userId,
+                    email   = email,
+                    username = string.IsNullOrEmpty(display) ? null : display
+                });
+            }
         }
     }
 

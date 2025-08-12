@@ -263,7 +263,7 @@ public class APIHandler : MonoBehaviour
     {
         string url = "https://erqsrecsciorigewaihr.supabase.co/storage/v1/object/list/finds";
         var payload = new {
-            prefix = "", // or "your_subfolder/" if needed
+            prefix = "",
             limit = 10,
             offset = 0,
             sortBy = new { column = "created_at", order = "desc" }
@@ -327,7 +327,7 @@ public class APIHandler : MonoBehaviour
     {
 
         //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
-
+ 
         string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}&select=*,Clans(*)";
         StartCoroutine(GetRequest(url, json =>
         {
@@ -424,9 +424,78 @@ public class APIHandler : MonoBehaviour
 
     }
 
+     public void GetAllClans()
+    {
+
+        //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
+
+        string url = $"{SUPABASE_URL}Clans?is_public=eq.true&order=created_at.desc&limit=10";
+        StartCoroutine(GetRequest(url, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from search.");
+                return;
+            }
+
+            List<ClanJoinResponse> clans = JsonConvert.DeserializeObject<List<ClanJoinResponse>>(json);
+
+            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("View2").Find("CurrentClans").Find("Viewport").Find("Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var clan in clans)
+            {
+                float _distance = 0;
+                GameObject buttonObj = Instantiate(clanButtonPrefab, scrollView);
+                buttonObj.transform.Find("ClanName").GetComponentInChildren<TextMeshProUGUI>().text = clan.Clans.name;
+
+                buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    CourseManager.Instance.SelectedClan = clan.Clans;
+                    SceneManager.LoadScene("ClanPage");
+                });
+            }
+        }));
+    
+    }
+    public void GetClanHistory()
+    {
+
+        //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
+
+        string url = $"{SUPABASE_URL}Clans?is_public=eq.true&order=esc&limit=10";
+        StartCoroutine(GetRequest(url, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from search.");
+                return;
+            }
+
+            List<ClanJoinResponse> clans = JsonConvert.DeserializeObject<List<ClanJoinResponse>>(json);
+
+            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("View2").Find("CurrentClans").Find("Viewport").Find("Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var clan in clans)
+            {
+                float _distance = 0;
+                GameObject buttonObj = Instantiate(clanButtonPrefab, scrollView);
+                buttonObj.transform.Find("ClanName").GetComponentInChildren<TextMeshProUGUI>().text = clan.Clans.name;
+
+                buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    CourseManager.Instance.SelectedClan = clan.Clans;
+                    SceneManager.LoadScene("ClanPage");
+                });
+            }
+        }));
+    }  
     public void GetLeaders()
     {
-        string leadersurl = $"{APIHandler.Instance.SUPABASE_URL}PlayerEloRating?select=*,Users(*)&order=elo_rating.desc&limit=10";
+        string leadersurl = $"{APIHandler.Instance.SUPABASE_URL}Users?order=elo.desc&limit=10";
         StartCoroutine(GetRequest(leadersurl, json =>
         {
             if (string.IsNullOrEmpty(json))
@@ -435,7 +504,7 @@ public class APIHandler : MonoBehaviour
                 return;
             }
             Debug.Log(json);
-            List<UserEloResponse> users = JsonConvert.DeserializeObject<List<UserEloResponse>>(json);
+            List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
             //Transform scrollView = GameObject.FindWithTag("LeadersView").transform;
             Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View1/CurrentLeaders/Viewport/Content");
             foreach (Transform child in scrollView)
@@ -444,17 +513,56 @@ public class APIHandler : MonoBehaviour
             foreach (var user in users)
             {
                 GameObject buttonObj = Instantiate(eloPrefab, scrollView);
-                buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = user.Users.username;
-                buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = user.elo_rating.ToString();
+                buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = user.username;
+                buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = user.elo.ToString();
                 buttonObj.GetComponent<Button>().onClick.AddListener(() =>
                 {
-                    CourseManager.Instance.user = user.Users;
+                    CourseManager.Instance.user = user;
                     SceneManager.LoadScene("Profile");
                 });
             }
             scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
         }));
     }
+
+    public void GetUserMatchHistory(string userId, System.Action<List<MatchHistoryItem>> callback)
+    {
+        string url = $"{SUPABASE_URL}rpc/get_user_match_history";
+	Debug.Log(url);
+   	var body = new Dictionary<string, object> {
+		{ "p_user_id", userId },
+        	{ "p_include_practice", false } // or true
+    	};
+    	string jsonData = JsonConvert.SerializeObject(body);
+
+        StartCoroutine(PostData(url, jsonData, (responseJson) =>
+        {
+            if (string.IsNullOrEmpty(responseJson))
+            {
+                Debug.LogError("No match found.");
+                callback(null);
+                return;
+            }
+
+            try
+            {
+                List<MatchHistoryItem> matches = JsonConvert.DeserializeObject<List<MatchHistoryItem>>(responseJson);
+                if (matches.Count > 0){
+                    callback(matches);
+                }
+                else
+                    callback(null);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Error parsing match response: " + e.Message);
+                callback(null);
+            }
+        }));
+
+    }
+
+
     // -----------------  GENERIC SUPABASE REQUESTS -----------------
 
         IEnumerator GetRequest(string url, System.Action<string> callback)

@@ -23,4 +23,8 @@ public class SceneLoader : MonoBehaviour
     {
         SceneManager.LoadScene("SelectCourse");
     }
+    public void Profile()
+    {
+        SceneManager.LoadScene("Profile");
+    }
 }
