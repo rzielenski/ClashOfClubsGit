@@ -35,7 +35,7 @@ public class ClanManager : MonoBehaviour
         clanElo.text = CourseManager.Instance.SelectedClan.elo.ToString();
         clanNameText.text = CourseManager.Instance.SelectedClan.name;
 
-        ShowClanMembers(); // <- call to populate members + toggles
+        ShowClanMembers();
 
         APIHandler.Instance.GetClanMatchHistory(CourseManager.Instance.SelectedClan.clan_id, matches =>
         {
@@ -54,7 +54,24 @@ public class ClanManager : MonoBehaviour
             }
         });
     }
-
+    public void FindMatch()
+    {
+        
+        APIHandler.Instance.GetBestClanMatch(CourseManager.Instance.SelectedClan.clan_id, CourseManager.Instance.SelectedClan.clan_mode, matchFormat, match =>
+        {
+            if (match != null)
+            {
+                //APIHandler.Instance.CreateMatchPlayer(match);
+                APIHandler.Instance.AddClanPlayersToMatch(match.match_id, CourseManager.Instance.SelectedClan.clan_id, starters, 2);
+                CourseManager.Instance.updated = false;
+                SceneManager.LoadScene("ChooseAction");
+            }
+            else
+            {
+                Debug.Log("No match found.");
+            }
+        });
+    }
     private void SetColorGradient(Color c, RainbowArt.CleanFlatUI.GradientModifier grad)
     {
         var g = new Gradient{
@@ -85,7 +102,8 @@ public class ClanManager : MonoBehaviour
 
         APIHandler.Instance.CreateClanMatch(
             clanId,
-            starters,          // capped list
+            starters,    
+            type,      
             matchFormat,
             name,
             publicMatch,
@@ -108,9 +126,10 @@ public class ClanManager : MonoBehaviour
 
             foreach (var m in members)
             {
+                Debug.Log($"Member: {m.user_id}, Role: {m.role}, Username: {m.Users?.username}");
                 var row = Instantiate(memberRowPrefab, content.transform);
 
-                var usernameTxt = row.transform.Find("Username")?.GetComponent<TextMeshProUGUI>();
+                var usernameTxt = row.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
                 var roleTxt     = row.transform.Find("Role")?.GetComponent<TextMeshProUGUI>();
                 if (usernameTxt) usernameTxt.text = string.IsNullOrEmpty(m.Users?.username) ? m.user_id : m.Users.username;
                 if (roleTxt)     roleTxt.text     = string.IsNullOrEmpty(m.role) ? "member" : m.role;

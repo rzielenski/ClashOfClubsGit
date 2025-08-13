@@ -145,34 +145,29 @@ public class APIHandler : MonoBehaviour
         }));
     }
 
-    // -----------------  MATCH HELPER FUNCTIONS -----------------
-    public void GetBestMatch(string user_id, System.Action<Match> callback)
+    public void GetBestClanMatch(string clan_id, string clan_type, System.Action<Match> callback)
     {
         string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
         var requestBody = new Dictionary<string, object>
         {
-            { "p_user_id", user_id },
-            { "p_match_type", "solo" }
+            { "p_clan_id", clan_id },
+            { "p_match_type", clan_type }
         };
         string jsonData = JsonConvert.SerializeObject(requestBody);
-        Debug.Log($"Requesting best match for user {user_id} with data: {jsonData}");
+        Debug.Log($"Requesting best match for clan {clan_id} with data: {jsonData}");
         StartCoroutine(PostData(url, jsonData, (responseJson) =>
         {
             if (string.IsNullOrEmpty(responseJson))
             {
-                Debug.LogError("No match found.");
+                Debug.Log("No match found.");
                 callback(null);
                 return;
             }
 
             try
             {
-                List<Match> matches = JsonConvert.DeserializeObject<List<Match>>(responseJson);
-                if (matches.Count > 0){
-                    callback(matches[0]);
-                }
-                else
-                    callback(null);
+                Match match = JsonConvert.DeserializeObject<Match>(responseJson);
+                callback(match);
             }
             catch (System.Exception e)
             {
@@ -180,13 +175,44 @@ public class APIHandler : MonoBehaviour
                 callback(null);
             }
         }));
-        
     }
 
+    public void GetBestMatch(string user_id, System.Action<Match> callback)
+    {
+        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
+        var requestBody = new Dictionary<string, object>
+        {
+            { "p_user_id", user_id },
+            { "p_match_type", "solo" },
+            { "p_format", "stroke" }
+        };
+        string jsonData = JsonConvert.SerializeObject(requestBody);
+        Debug.Log($"Requesting best match for user {user_id} with data: {jsonData}");
+        StartCoroutine(PostData(url, jsonData, (responseJson) =>
+        {
+            if (string.IsNullOrEmpty(responseJson))
+            {
+                Debug.Log("No match found.");
+                callback(null);
+                return;
+            }
+
+            try
+            {
+                Match match = JsonConvert.DeserializeObject<Match>(responseJson);
+                callback(match);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Error parsing match response: " + e.Message);
+                callback(null);
+            }
+        }));
+    }
 
     public void CreateMatch(string match_type, string format, string name, bool is_public, bool is_practice)
     {
-        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/Matches?select*"; 
+        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/Matches?select*";
 
         var matchData = new Dictionary<string, object>
         {
@@ -240,151 +266,161 @@ public class APIHandler : MonoBehaviour
         }));
     }
 
+    // Add this method to APIHandler.cs
+    public void VoidOldMatches(System.Action<bool> callback = null)
+    {
+        string url = $"{SUPABASE_URL}rpc/void_old_matches";
+        string jsonData = "{}"; // No parameters needed
+
+        StartCoroutine(PostData(url, jsonData, response =>
+        {
+            bool success = response != null; // Success if not null ("" for VOID); failure if null
+            if (success)
+            {
+                Debug.Log("Old matches voided successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to void old matches.");
+            }
+            callback?.Invoke(success);
+        }));
+    }
+
     public void CreateMatchPlayer(Match match)
     {
-        string newurl = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers";
-
+        string url = SUPABASE_URL + "MatchPlayers";
         var matchPlayerData = new Dictionary<string, object>
         {
             { "match_id", match.match_id },
             { "user_id", CourseManager.Instance.user.user_id },
-            { "side" , 2}
+            { "side", 2 }
         };
-
-        string newJsonData = JsonConvert.SerializeObject(matchPlayerData);
-        StartCoroutine(PostData(newurl, newJsonData, json => { }));
-
+        string jsonData = JsonConvert.SerializeObject(matchPlayerData);
+        StartCoroutine(PostData(url, jsonData, json => { }));
         CourseManager.Instance.curMatch = match;
     }
-// --- create a clan match and seed starters on side 1
-	public void CreateClanMatch(
-	    string clanId,
-	    List<string> starterUserIds,   // user_id strings for your clan
-	    string format,
-	    string name,
-	    bool is_public,
-	    bool is_practice)
-	{
-	    string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/Matches?select=*";
 
-	    var matchData = new Dictionary<string, object>
-	    {
-		{ "match_type", "clan" },
-		{ "format", format },
-		{ "name", name },
-		{ "is_public", is_public },
-		{ "is_practice", is_practice }
-	    };
+	public void CreateClanMatch(string clanId, List<string> userIds, string matchType, string match_format, string matchName, bool isPublic, bool isPractice)
+    {
+        string url = $"{SUPABASE_URL}Matches?select=*";
+        int max = matchType == "duo" ? 2 : 4;
+        var matchData = new Dictionary<string, object>
+        {
+            { "match_type", matchType },     // e.g. "duo" / "squad"
+            { "format", match_format },      // e.g. "stroke" / "scramble"
+            { "name", matchName },
+            { "is_public", isPublic },
+            { "is_practice", isPractice },
+            { "max_players", 2 * max }
+        };
 
-	    string jsonData = JsonConvert.SerializeObject(matchData);
+        string jsonData = JsonConvert.SerializeObject(matchData);
+        StartCoroutine(PostData(url, jsonData, (matchJson) =>
+        {
+            if (string.IsNullOrEmpty(matchJson))
+            {
+                Debug.LogError("Failed to create match.");
+                return;
+            }
 
-	    StartCoroutine(PostData(url, jsonData, resjson =>
-	    {
-		if (string.IsNullOrEmpty(resjson))
-		{
-		    Debug.LogError("Clan match insert returned empty response.");
-		    return;
-		}
+            try
+            {
+                var created = JsonConvert.DeserializeObject<List<Match>>(matchJson);
+                if (created == null || created.Count == 0)
+                {
+                    Debug.LogError("Create match returned no rows.");
+                    return;
+                }
 
-		try
-		{
-		    var matches = JsonConvert.DeserializeObject<List<Match>>(resjson);
-		    if (matches == null || matches.Count == 0)
-		    {
-			Debug.LogError("Clan match insert response did not contain a valid match.");
-			return;
-		    }
+                var match = created[0];
+                CourseManager.Instance.curMatch = match;
 
-		    var match = matches[0];
-		    CourseManager.Instance.curMatch = match;
+                AddClanPlayersToMatch(match.match_id, clanId, userIds, 1);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"CreateClanMatch parse error: {e.Message} | raw: {matchJson}");
+            }
+        }));
+    }
 
-		    // bulk insert starters to MatchPlayers (side = 1)
-		    if (starterUserIds == null || starterUserIds.Count == 0)
-			starterUserIds = new List<string> { CourseManager.Instance.user.user_id }; // fallback
 
-		    string playersUrl = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers";
+	public void AddClanPlayersToMatch(string matchId, string clanId, List<string> userIds, int side)
+    {
+        string url = $"{SUPABASE_URL}MatchPlayers";
+        foreach (var userId in userIds)
+        {
+            var playerData = new Dictionary<string, object>
+            {
+                { "match_id", matchId },
+                { "user_id", userId },
+                { "clan_id", clanId },
+                { "side", side }
+            };
+            string jsonData = JsonConvert.SerializeObject(playerData);
+            Debug.Log(jsonData);
+            StartCoroutine(PostData(url, jsonData, json => { }));
+        }
+    }
 
-		    var rows = new List<Dictionary<string, object>>();
-		    foreach (var uid in starterUserIds)
-		    {
-			rows.Add(new Dictionary<string, object> {
-			    { "match_id", match.match_id },
-			    { "user_id", uid },
-			    { "clan_id", clanId },
-			    { "side", 1 },
-			    { "score_visible", true },
-			    { "completed", false }
-			});
-		    }
+	public void GetBestClanMatch(string clanId, string clanMode, string matchFormat, System.Action<Match> callback)
+    {
+        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
+        var body = new Dictionary<string, object>
+        {
+            { "p_user_id",  null },          // not used for clan
+            { "p_clan_id",  clanId },
+            { "p_match_type", clanMode },    // 'duo'/'squad'
+            { "p_format", matchFormat }      // 'stroke'/'scramble'
+        };
+        string json = JsonConvert.SerializeObject(body);
+        Debug.Log(json);
+        StartCoroutine(PostData(url, json, responseJson =>
+        {
+            if (string.IsNullOrEmpty(responseJson) || responseJson == "null" || responseJson == "{}")
+            {
+                callback(null);
+                return;
+            }
 
-		    string rowsJson = JsonConvert.SerializeObject(rows);
-		    StartCoroutine(PostData(playersUrl, rowsJson, _ => { }));
+            try
+            {
+                // Try array first (optional, but kept for robustness)
+                var matches = JsonConvert.DeserializeObject<List<Match>>(responseJson);
+                if (matches != null && matches.Count > 0)
+                {
+                    var match = matches[0];
+                    if (!string.IsNullOrEmpty(match.match_id))
+                    {
+                        callback(match);
+                        return;
+                    }
+                }
+            }
+            catch { /* fall through */ }
 
-		    Debug.Log($"Created clan match {match.match_id} with {starterUserIds.Count} starters.");
-		}
-		catch (System.Exception e)
-		{
-		    Debug.LogError("Error parsing clan match response: " + e.Message);
-		}
-	    }));
-	}
+            try
+            {
+                // Fallback: single object
+                var single = JsonConvert.DeserializeObject<Match>(responseJson);
+                if (single != null && !string.IsNullOrEmpty(single.match_id))
+                {
+                    callback(single);
+                }
+                else
+                {
+                    callback(null);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Error parsing best clan match response: " + e.Message + " | " + responseJson);
+                callback(null);
+            }
+        }));
+    }
 
-	// --- add your clan's players to an existing match (choose side)
-	public void AddClanPlayersToMatch(string matchId, string clanId, List<string> userIds, int side, System.Action<bool> done = null)
-	{
-	    string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers";
-
-	    if (userIds == null || userIds.Count == 0) userIds = new List<string> { CourseManager.Instance.user.user_id };
-
-	    var rows = new List<Dictionary<string, object>>();
-	    foreach (var uid in userIds)
-	    {
-		rows.Add(new Dictionary<string, object> {
-		    { "match_id", matchId },
-		    { "user_id", uid },
-		    { "clan_id", clanId },
-		    { "side", side },
-		    { "score_visible", true },
-		    { "completed", false }
-		});
-	    }
-
-	    string json = JsonConvert.SerializeObject(rows);
-	    StartCoroutine(PostData(url, json, res =>
-	    {
-		bool ok = !string.IsNullOrEmpty(res);
-		if (!ok) Debug.LogError("Failed to add clan players to match.");
-		done?.Invoke(ok);
-	    }));
-	}
-
-	// --- find best open clan match for this clan (server-side RPC you already have)
-	public void GetBestClanMatch(string clanId, System.Action<Match> callback)
-	{
-	    string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/rpc/get_best_match";
-	    var body = new Dictionary<string, object>
-	    {
-		{ "p_user_id",  (string)null },
-		{ "p_clan_id",  clanId },
-		{ "p_match_type", "clan" }
-	    };
-	    string json = JsonConvert.SerializeObject(body);
-
-	    StartCoroutine(PostData(url, json, responseJson =>
-	    {
-		if (string.IsNullOrEmpty(responseJson)) { callback(null); return; }
-		try
-		{
-		    var matches = JsonConvert.DeserializeObject<List<Match>>(responseJson);
-		    callback(matches != null && matches.Count > 0 ? matches[0] : null);
-		}
-		catch (System.Exception e)
-		{
-		    Debug.LogError("Error parsing best clan match response: " + e.Message);
-		    callback(null);
-		}
-	    }));
-	}
 
         public void GetClanMembers(string clanId, System.Action<List<ClanMemberWithUser>> cb)
 	{
@@ -514,16 +550,46 @@ public class APIHandler : MonoBehaviour
             }
         }));
     }
+    
+    public void GetUserClansProfile(string userId, System.Action<List<ClanJoinResponse>> callback)
+    {
+
+        //string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{CourseManager.Instance.user.user_id}";
+ 
+        string url = $"{SUPABASE_URL}ClanMembers?user_id=eq.{userId}&select=*,Clans(*)";
+        StartCoroutine(GetRequest(url, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from search.");
+                return;
+            }
+
+            List<ClanJoinResponse> clans = JsonConvert.DeserializeObject<List<ClanJoinResponse>>(json);
+            if (clans == null || clans.Count == 0)
+            {
+                Debug.LogError("No clans found for user.");
+                callback?.Invoke(new List<ClanJoinResponse>());
+                return;
+            }
+            else
+            {
+                callback?.Invoke(clans);
+                return;
+            }
+        }));
+    }
 
     public void CreateClan(string match_type, string name, bool is_public)
     {
-        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/Clans?select*"; 
-
+        string url = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/Clans?select*";
+        int max = match_type == "duo" ? 2 : 4;
         var clanData = new Dictionary<string, object>
         {
             { "clan_mode", match_type },
             { "name", name },
-            { "is_public", is_public }
+            { "is_public", is_public },
+            { "max_players", max}
         };
 
         string jsonData = JsonConvert.SerializeObject(clanData);
@@ -546,13 +612,15 @@ public class APIHandler : MonoBehaviour
                 }
 
                 Clan clan = clans[0];
-                
+                CourseManager.Instance.SelectedClan = clan;
+
                 string newurl = "https://erqsrecsciorigewaihr.supabase.co/rest/v1/ClanMembers";
 
                 var clanMemberData = new Dictionary<string, object>
                 {
                     { "clan_id", clan.clan_id },
-                    { "user_id", CourseManager.Instance.user.user_id }
+                    { "user_id", CourseManager.Instance.user.user_id },
+                    { "role", "leader" }
                 };
 
                 string newJsonData = JsonConvert.SerializeObject(clanMemberData);
@@ -663,7 +731,7 @@ public class APIHandler : MonoBehaviour
             Debug.Log(json);
             List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
             //Transform scrollView = GameObject.FindWithTag("LeadersView").transform;
-            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View1/CurrentLeaders/Viewport/Content");
+            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View1/CurrentSoloLeaders/Viewport/Content");
             foreach (Transform child in scrollView)
                 Destroy(child.gameObject);
 
@@ -672,25 +740,90 @@ public class APIHandler : MonoBehaviour
                 GameObject buttonObj = Instantiate(eloPrefab, scrollView);
                 buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = user.username;
                 buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = user.elo.ToString();
-                buttonObj.GetComponent<Button>().onClick.AddListener(() =>
-                {
-                    CourseManager.Instance.user = user;
-                    SceneManager.LoadScene("Profile");
-                });
+                // buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                // {
+                //     CourseManager.Instance.user = user;
+                //     SceneManager.LoadScene("Profile");
+                // });
             }
             scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
         }));
     }
 
+    public void GetClanLeaders()
+    {
+        /// DUOS
+        string leadersurl = $"{APIHandler.Instance.SUPABASE_URL}Clans?clan_mode=eq.duo&order=elo.desc&limit=10";
+        StartCoroutine(GetRequest(leadersurl, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from leaders request.");
+                return;
+            }
+            Debug.Log(json);
+            List<Clan> clans = JsonConvert.DeserializeObject<List<Clan>>(json);
+            //Transform scrollView = GameObject.FindWithTag("LeadersView").transform;
+            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View2/CurrentDuoLeaders/Viewport/Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var clan in clans)
+            {
+                GameObject buttonObj = Instantiate(eloPrefab, scrollView);
+                buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = clan.name;
+                buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = clan.elo.ToString();
+                // buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                // {
+                //     CourseManager.Instance.user = user;
+                //     SceneManager.LoadScene("Profile");
+                // });
+            }
+            scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
+        }));
+
+         /// DUOS
+        leadersurl = $"{APIHandler.Instance.SUPABASE_URL}Clans?clan_mode=eq.squad&order=elo.desc&limit=10";
+        StartCoroutine(GetRequest(leadersurl, json =>
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("No JSON returned from leaders request.");
+                return;
+            }
+            Debug.Log(json);
+            List<Clan> clans = JsonConvert.DeserializeObject<List<Clan>>(json);
+            //Transform scrollView = GameObject.FindWithTag("LeadersView").transform;
+            Transform scrollView = GameObject.Find("TopViewGroup").transform.Find("TopView3/TabViewLine_FillExpand/ViewGroup/View3/CurrentSquadLeaders/Viewport/Content");
+            foreach (Transform child in scrollView)
+                Destroy(child.gameObject);
+
+            foreach (var clan in clans)
+            {
+                GameObject buttonObj = Instantiate(eloPrefab, scrollView);
+                buttonObj.transform.Find("LeaderName").GetComponentInChildren<TextMeshProUGUI>().text = clan.name;
+                buttonObj.transform.Find("EloScore").GetComponentInChildren<TextMeshProUGUI>().text = clan.elo.ToString();
+                // buttonObj.GetComponent<Button>().onClick.AddListener(() =>
+                // {
+                //     CourseManager.Instance.user = user;
+                //     SceneManager.LoadScene("Profile");
+                // });
+            }
+            scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(scrollView.GetComponent<RectTransform>().sizeDelta.x, scrollView.childCount * 150);
+        }));
+
+    }
+
+
     public void GetUserMatchHistory(string userId, System.Action<List<MatchHistoryItem>> callback)
     {
         string url = $"{SUPABASE_URL}rpc/get_user_match_history";
-	Debug.Log(url);
-   	var body = new Dictionary<string, object> {
-		{ "p_user_id", userId },
-        	{ "p_include_practice", false } // or true
+        Debug.Log(url);
+        var body = new Dictionary<string, object> {
+        { "p_user_id", userId },
+            { "p_include_practice", false } // or true
     	};
-    	string jsonData = JsonConvert.SerializeObject(body);
+        string jsonData = JsonConvert.SerializeObject(body);
 
         StartCoroutine(PostData(url, jsonData, (responseJson) =>
         {
@@ -704,7 +837,8 @@ public class APIHandler : MonoBehaviour
             try
             {
                 List<MatchHistoryItem> matches = JsonConvert.DeserializeObject<List<MatchHistoryItem>>(responseJson);
-                if (matches.Count > 0){
+                if (matches.Count > 0)
+                {
                     callback(matches);
                 }
                 else
@@ -840,17 +974,15 @@ public class APIHandler : MonoBehaviour
 
             yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success || www.responseCode == 201)
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Round inserted successfully.");
-                Debug.Log(www.downloadHandler.text);  // Optional: show inserted data
-                string json = www.downloadHandler.text;
-                callback?.Invoke(json);
+                Debug.Log("Request successful.");
+                callback?.Invoke(www.downloadHandler.text);  // "" for VOID RPC success
             }
             else
             {
                 Debug.LogError($"Failed to insert: {www.error}, Response: {www.downloadHandler.text}");
-                callback?.Invoke(null);
+                callback?.Invoke(null);  // null on failure
             }
         }
     }

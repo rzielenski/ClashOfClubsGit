@@ -30,8 +30,8 @@ public class ChooseActionManager : MonoBehaviour
 
     public string matchFormat;
     public bool practiceMatch = false;
-    public bool publicMatch = true;
-    public bool publicClan = true;
+    public bool publicMatch = false;
+    public bool publicClan = false;
 
     public int clanMaxPlayers;
 
@@ -40,6 +40,8 @@ public class ChooseActionManager : MonoBehaviour
         RefreshOpenMatches();
         APIHandler.Instance.GetUserClans();
         APIHandler.Instance.GetLeaders();
+        APIHandler.Instance.GetClanLeaders();
+        APIHandler.Instance.VoidOldMatches();
     }
     public void toggleMatchPractice()
     {
@@ -70,29 +72,18 @@ public class ChooseActionManager : MonoBehaviour
     {
         clanMaxPlayers = size;
     }
+
     public void CreateMatch(string nameOverride = "")
     {
-        string type = "solo";
-        string name = "";
-        if (practiceMatch)
-        {
-            type = "practice";
-        }
-        else { }
-
-        if (nameOverride != "")
-        {
-            name = nameOverride;
-        }
-        else
-        {
-            name = matchNameInput.text;
-        }
+        string type = practiceMatch ? "practice" : "solo";
+        string name = nameOverride != "" ? nameOverride : matchNameInput.text;
         CourseManager.Instance.roundType = type;
         CourseManager.Instance.updated = false;
         APIHandler.Instance.CreateMatch(type, matchFormat, name, publicMatch, practiceMatch);
         SceneManager.LoadScene("SelectCourse");
     }
+
+    
 
     public void FindMatch()
     {
@@ -129,7 +120,7 @@ public class ChooseActionManager : MonoBehaviour
         }
 
         APIHandler.Instance.CreateClan(type, name, publicClan);
-        SceneManager.LoadScene("Clans");
+        SceneManager.LoadScene("ClanPage");
     }
 
     public void FindClan()
@@ -189,7 +180,7 @@ public class ChooseActionManager : MonoBehaviour
         {
             foreach (var m in list)
             {
-	    	Debug.Log(m.name);
+	    	    Debug.Log(m.name);
                 var row = Instantiate(openMatchRowPrefab, openMatchesContent);
                 row.transform.Find("Title").GetComponent<TextMeshProUGUI>().text =
                     string.IsNullOrEmpty(m.name) ? "Match" : m.name;
@@ -200,7 +191,7 @@ public class ChooseActionManager : MonoBehaviour
                 // row.transform.Find("Meta").GetComponent<TextMeshProUGUI>().text =
                 //     $"Side {m.side?.ToString() ?? "?"} • {(m.is_practice ? "practice" : "rated")}";
 
-		//var playBtn = row.transform.Find("PlayButton").GetComponent<Button>();
+		    //var playBtn = row.transform.Find("PlayButton").GetComponent<Button>();
                 row.GetComponent<Button>().onClick.AddListener(() =>
                 {
                     // Hydrate your existing Match object if you need it, or just pass id forward

@@ -305,26 +305,16 @@ public class SupabaseAuth : MonoBehaviour
     private IEnumerator UpsertsAfterLogin(string accessToken, string userId, string email, Action done)
     {
         // Users upsert
+        string username = CourseManager.Instance.user?.username;
         string userUrl = $"{SUPABASE_URL}/rest/v1/Users";
         var userData = new Dictionary<string, object>
         {
             { "user_id", userId },
-            { "email", email }
+            { "email", email },
+            { "username", username }
         };
         string userJson = JsonConvert.SerializeObject(userData);
         yield return PostToSupabase(userUrl, userJson, accessToken, "User", ignoreDups: true);
-
-        // Elo upsert (solo)
-        string eloUrl = $"{SUPABASE_URL}/rest/v1/PlayerEloRating";
-        var eloData = new Dictionary<string, object>
-        {
-            { "match_type", "solo" },
-            { "user_id", userId },
-            { "elo_rating", 1200 }
-        };
-        string eloJson = JsonConvert.SerializeObject(eloData);
-        yield return PostToSupabase(eloUrl, eloJson, accessToken, "ELO(solo)", ignoreDups: true);
-
         done?.Invoke();
     }
 
