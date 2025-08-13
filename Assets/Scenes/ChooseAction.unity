@@ -8354,8 +8354,11 @@ MonoBehaviour:
   clanPanel: {fileID: 1209405338}
   matchNameInput: {fileID: 1147119636}
   clanNameInput: {fileID: 885919037}
+  searchClan: {fileID: 0}
   scrollView: {fileID: 1410082169}
   clanScrollView: {fileID: 2131593030}
+  openMatchRowPrefab: {fileID: 2663928384262644876, guid: 8dd36f3e4525bb544a7c78dadb99965b, type: 3}
+  clanRowPrefab: {fileID: 2663928384262644876, guid: 8a20140f2d22b144192f8c501cd80ce0, type: 3}
   matchFormat: 
   practiceMatch: 0
   publicMatch: 1
@@ -9955,7 +9958,19 @@ MonoBehaviour:
   m_CharacterLimit: 0
   m_OnEndEdit:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1776662555}
+        m_TargetAssemblyTypeName: ChooseActionManager, Assembly-CSharp
+        m_MethodName: SearchClan
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls: []
@@ -13005,7 +13020,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5442286158237001933}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -14333,7 +14348,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812143325146170156}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0

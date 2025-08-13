@@ -51,16 +51,31 @@ public class CourseManager : MonoBehaviour
         string url = $"https://erqsrecsciorigewaihr.supabase.co/rest/v1/MatchPlayers?user_id=eq.{user.user_id}&match_id=eq.{curMatch.match_id}";
 
         Debug.Log(url);
-        var roundData = new Dictionary<string, object>
+        var matchData = new Dictionary<string, object>
         {
             { "tee_id", SelectedCourse.tees.teebox_id },
             { "strokes", total_score },
             { "completed", true }
         };
 
-        string jsonData = JsonConvert.SerializeObject(roundData);
-        Debug.Log(jsonData);
+        string jsonData = JsonConvert.SerializeObject(matchData);
         StartCoroutine(PatchData(url, jsonData));
+	
+	string newurl = $"https://erqsrecsciorigewaihr.supabase.co/rest/v1/Rounds";
+
+        var roundData = new Dictionary<string, object>
+        {
+	    { "user_id", user.user_id },
+	    { "course_id", SelectedCourse.course_id },
+            { "tee_id", SelectedCourse.tees.teebox_id },
+            { "total_score", total_score },
+            { "round_type", roundType },
+	    { "hole_scores", holeScores },
+	    { "match_id", curMatch.match_id }
+        };
+
+        string newjsonData = JsonConvert.SerializeObject(roundData);
+        StartCoroutine(PostData(newurl, newjsonData));
 
     }
 

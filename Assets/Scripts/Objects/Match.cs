@@ -41,4 +41,17 @@ public class MatchHistoryItem {
     public float side1_avg_strokes;
     public float side2_avg_strokes;
 }
+[System.Serializable]
+public class OpenMatchItem {
+    public string match_id;
+    public string match_type;
+    public string format;
+    public string name;
+    public bool is_public;
+    public bool is_practice;
+    public string created_at; // ISO string
+    // optional: include side / clan for context
+    public short? side;
+    public string clan_id;
+}
 
