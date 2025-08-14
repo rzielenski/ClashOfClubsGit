@@ -436,6 +436,7 @@ MonoBehaviour:
     gems_balance: 0
     total_wins: 0
     total_matches: 0
+    elo: 0
   user_elo: 0
   updated: 0
 --- !u!4 &168473629
@@ -1141,6 +1142,7 @@ MonoBehaviour:
   eloPrefab: {fileID: 0}
   teesButtonPrefab: {fileID: 3233485351319438983, guid: cd2af1d0f85540b4f81a618b6f2acba8, type: 3}
   locationData: {fileID: 1603841997}
+  findImageItemPrefab: {fileID: 0}
 --- !u!4 &778181501
 Transform:
   m_ObjectHideFlags: 0
@@ -1573,58 +1575,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1205135166}
   m_CullTransparentMesh: 0
---- !u!1 &1291594896
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1291594898}
-  - component: {fileID: 1291594899}
-  m_Layer: 0
-  m_Name: AuthManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1291594898
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1291594896}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1368.8708, y: 1346.5736, z: -16.561253}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1291594899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1291594896}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f92d1437e56bdd845aa8e6e89809350c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SUPABASE_URL: https://erqsrecsciorigewaihr.supabase.co
-  SUPABASE_API_KEY: <YOUR ANON KEY>
-  emailInput: {fileID: 1733050942447881873}
-  passwordInput: {fileID: 1682540854}
-  userInput: {fileID: 1392326783}
-  signIn: {fileID: 7575412654049002416}
-  signUp: {fileID: 1790000863}
-  statusText: {fileID: 1935620740}
 --- !u!1 &1392326781
 GameObject:
   m_ObjectHideFlags: 0
@@ -2285,6 +2235,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1609410601
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1609410603}
+  - component: {fileID: 1609410602}
+  m_Layer: 0
+  m_Name: SignUpManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1609410602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609410601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1982ab88baa5efd458d404fa0d21dcc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  signUpButton: {fileID: 1790000863}
+  emailInput: {fileID: 1733050942447881873}
+  passwordInput: {fileID: 1682540854}
+  userInput: {fileID: 1392326783}
+--- !u!4 &1609410603
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609410601}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 529.6081, y: 1561.5558, z: -8.817428}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1644560916
 GameObject:
   m_ObjectHideFlags: 0
@@ -2712,7 +2710,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1866591359}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1609410601}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!222 &1790000864
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4864,6 +4874,6 @@ SceneRoots:
   - {fileID: 332931618}
   - {fileID: 1918419105}
   - {fileID: 168473629}
-  - {fileID: 1291594898}
   - {fileID: 778181501}
   - {fileID: 1603841998}
+  - {fileID: 1609410603}

@@ -74,7 +74,11 @@ public class ProfileManager : MonoBehaviour
 
 		panel.Find("UserElo").GetComponent<TextMeshProUGUI>().text = "ELO: " + CourseManager.Instance.user.elo.ToString();
 	}
-
+	public void OnSignOutClicked()
+	{
+		SupabaseAuth.Instance.OnSignOutClicked();
+		SceneManager.LoadScene("SignIn");
+	}
 	private void SetColorGradient(Color c, GradientModifier grad)
 	{
 		var g = new Gradient

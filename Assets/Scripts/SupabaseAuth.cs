@@ -8,15 +8,41 @@ using System;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.IO;
 using SyE.BiometricsAuthentication;
 
 public class SupabaseAuth : MonoBehaviour
 {
-    
-    private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
-    private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
+    // ---------- Singleton & persistence ----------
+    public static SupabaseAuth Instance { get; private set; }
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // persist through scenes
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
 
-    
+    // ---------- Session ----------
+    public string AccessToken { get; private set; }
+
+    // Keys & path used for local/session cleanup
+    private const string RefreshTokenKey = "refresh_token";
+    private static string SavePath => Path.Combine(Application.persistentDataPath, "saveData.json");
+
+    // ---------- Supabase ----------
+    [Header("Supabase")]
+    [SerializeField] private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
+    [SerializeField] private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
+
+    // ---------- UI ----------
+    [Header("UI")]
     public TMP_InputField emailInput;
     public TMP_InputField passwordInput;
     public TMP_InputField userInput;
@@ -26,6 +52,9 @@ public class SupabaseAuth : MonoBehaviour
 
     private void Start()
     {
+        // Allow other scripts to fetch current access token (e.g., AccountDeletion)
+        AccountDeletion.GetAccessToken = () => AccessToken;
+
         var scene = SceneManager.GetActiveScene().name;
 
         if (scene == "SignIn")
@@ -33,12 +62,76 @@ public class SupabaseAuth : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
             TryBiometricLogin();
 #endif
-            if (signIn != null) signIn.onClick.AddListener(OnSignInClicked);
         }
-        else if (scene == "SignUp")
+        
+    }
+
+    // ============================================================
+    // Public: Sign Out (call from Profile/Settings in any scene)
+    // ============================================================
+    public void OnSignOutClicked()
+    {
+        StartCoroutine(SignOutAndWipeCoroutine(() =>
         {
-            if (signUp != null) signUp.onClick.AddListener(OnSignUpClicked);
+            // After sign out + wipe, go to SignIn scene
+            SceneManager.LoadScene("SignIn");
+        }));
+    }
+
+    private IEnumerator SignOutAndWipeCoroutine(Action onDone)
+    {
+        // 1) Best effort: revoke session on Supabase (optional)
+        yield return StartCoroutine(TrySupabaseLogout());
+
+        // 2) Wipe local data (refresh token + saveData.json)
+        WipeLocalData();
+
+        // 3) Clear in-memory state
+        AccessToken = null;
+        if (CourseManager.Instance != null) CourseManager.Instance.user = null;
+
+        onDone?.Invoke();
+    }
+
+    private IEnumerator TrySupabaseLogout()
+    {
+        if (string.IsNullOrEmpty(AccessToken))
+            yield break;
+
+        string url = $"{SUPABASE_URL}/auth/v1/logout";
+
+        using (var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
+        {
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("apikey", SUPABASE_API_KEY);
+            req.SetRequestHeader("Authorization", $"Bearer {AccessToken}");
+
+            // Some proxies expect a body
+            byte[] body = System.Text.Encoding.UTF8.GetBytes("{}");
+            req.uploadHandler = new UploadHandlerRaw(body);
+            req.SetRequestHeader("Content-Type", "application/json");
+
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogWarning($"Supabase logout failed: {req.responseCode} {req.error} {req.downloadHandler.text}");
+            }
         }
+    }
+
+    private void WipeLocalData()
+    {
+        // Remove refresh token from secure storage (Keychain/PlayerPrefs)
+        try { SecureStorage.Delete(RefreshTokenKey); } catch {}
+
+        // Delete saved game/session file
+        try
+        {
+            if (File.Exists(SavePath))
+                File.Delete(SavePath);
+        }
+        catch {}
     }
 
     // =========================
@@ -49,11 +142,11 @@ public class SupabaseAuth : MonoBehaviour
         Biometrics.Authenticate(
             onSuccess: () =>
             {
-                statusText.text = "Biometric confirmed";
-                var refresh = SecureStorage.Get("refresh_token");
+                if (statusText) statusText.text = "Biometric confirmed";
+                var refresh = SecureStorage.Get(RefreshTokenKey);
                 if (string.IsNullOrEmpty(refresh))
                 {
-                    statusText.text = "No saved session on this device. Sign in once.";
+                    if (statusText) statusText.text = "No saved session on this device. Sign in once.";
                     return;
                 }
 
@@ -61,33 +154,32 @@ public class SupabaseAuth : MonoBehaviour
                 {
                     if (!ok)
                     {
-                        statusText.text = $"Session refresh failed: {msg}";
+                        if (statusText) statusText.text = $"Session refresh failed: {msg}";
                         return;
                     }
 
+                    AccessToken = access;
+
                     if (!string.IsNullOrEmpty(refreshOut))
-                        SecureStorage.Set("refresh_token", refreshOut);
+                        SecureStorage.Set(RefreshTokenKey, refreshOut);
 
                     // Fetch user and go
                     StartCoroutine(GetUserInfo(access, user =>
                     {
                         if (user == null)
                         {
-                            statusText.text = "Failed to fetch user.";
+                            if (statusText) statusText.text = "Failed to fetch user.";
                             return;
                         }
 
-                        // Set your app's user state
                         CourseManager.Instance.user = user;
-                        // Optionally fetch/set username here
-
                         SceneManager.LoadScene("ChooseAction");
                     }));
                 }));
             },
             onFailure: () =>
             {
-                statusText.text = "Biometric authentication failed.";
+                if (statusText) statusText.text = "Biometric authentication failed.";
             }
         );
     }
@@ -95,37 +187,57 @@ public class SupabaseAuth : MonoBehaviour
     // =========================
     // Manual Sign In (password)
     // =========================
-    private void OnSignInClicked()
+    public void OnSignInClicked(string _email = null, string _password = null)
     {
-        string email = emailInput?.text?.Trim();
-        string password = passwordInput?.text;
+
+        string email = ""; 
+        string password = "";
+        if (_email == null)
+        {
+            email = emailInput?.text?.Trim();
+        }
+        else
+        {
+            email = _email;
+        }
+
+        if (_password == null)
+        {
+            password = passwordInput?.text;
+        }
+        else
+        {
+            password = _password;
+        }
+
+
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            statusText.text = "Please enter email and password.";
+            if (statusText) statusText.text = "Please enter email and password.";
             return;
         }
 
         StartCoroutine(PasswordGrantSignIn(email, password, (ok, message, access, refresh, expiresUtc) =>
         {
-            statusText.text = message;
+            if (statusText) statusText.text = message;
             if (!ok) return;
 
+            AccessToken = access;
             if (!string.IsNullOrEmpty(refresh))
-                SecureStorage.Set("refresh_token", refresh);
+                SecureStorage.Set(RefreshTokenKey, refresh);
 
-            // Fetch user id and do initial upserts
+            // Fetch user & upserts
             StartCoroutine(GetUserInfo(access, user =>
             {
                 if (user == null)
                 {
-                    statusText.text = "Failed to fetch user";
+                    if (statusText) statusText.text = "Failed to fetch user";
                     return;
                 }
 
                 CourseManager.Instance.user = user;
 
-                // Upsert minimal profile & Elo using USER token (RLS-friendly)
                 StartCoroutine(UpsertsAfterLogin(access, user.user_id, user.email, () =>
                 {
                     SceneManager.LoadScene("ChooseAction");
@@ -134,27 +246,50 @@ public class SupabaseAuth : MonoBehaviour
         }));
     }
 
-    // ==========
-    // Sign Up
-    // ==========
-    private void OnSignUpClicked()
+    // ========== Sign Up ==========
+    public void OnSignUpClicked(string _email = null, string _password = null, string _username = null)
     {
-        string email = emailInput?.text?.Trim();
-        string password = passwordInput?.text;
-        string username = userInput?.text?.Trim();
+        string email = ""; 
+        string password = ""; 
+        string username = "";
+        if (_email == null)
+        {
+            email = emailInput?.text?.Trim();
+        }
+        else
+        {
+            email = _email;
+        }
+        
+        if (_password == null)
+        {
+            password = passwordInput?.text;
+        }
+        else
+        {
+            password = _password;
+        }
+
+        if (_username == null)
+        {
+            username = userInput?.text?.Trim();
+        }
+        else
+        {
+            username = _username;
+        }
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            statusText.text = "Please enter email and password.";
+            if (statusText) statusText.text = "Please enter email and password.";
             return;
         }
 
         StartCoroutine(SignUpCoroutine(email, password, username, (success, message) =>
         {
-            statusText.text = message;
+            if (statusText) statusText.text = message;
             if (success)
             {
-                // Usually requires email confirmation; no session/token saved here.
                 emailInput.text = "";
                 passwordInput.text = "";
             }
@@ -260,14 +395,16 @@ public class SupabaseAuth : MonoBehaviour
 
         if (req.result != UnityWebRequest.Result.Success)
         {
-        	onUser?.Invoke(null);
+            onUser?.Invoke(null);
+            yield break;
         }
+
         var auth = JObject.Parse(req.downloadHandler.text);
-        string userId = auth["id"]?.ToString();
-        string email  = auth["email"]?.ToString();
+        string userId  = auth["id"]?.ToString();
+        string email   = auth["email"]?.ToString();
         string display = auth["user_metadata"]?["display_name"]?.ToString();
 
-        // 2) App user row (RLS-friendly: use the SAME bearer token)
+        // Fetch app user row
         string userUrl = $"{SUPABASE_URL}/rest/v1/Users?user_id=eq.{userId}&select=*";
         using (var req2 = UnityWebRequest.Get(userUrl))
         {
@@ -283,19 +420,18 @@ public class SupabaseAuth : MonoBehaviour
                 yield break;
             }
 
-            // The REST endpoint returns a JSON array
             var arr = JArray.Parse(req2.downloadHandler.text);
             if (arr.Count > 0)
             {
-                var user = arr[0].ToObject<User>(); // your model from User.cs
+                var user = arr[0].ToObject<User>();
                 onUser?.Invoke(user);
             }
             else
             {
-                // If row doesn't exist yet, return a minimal object (or upsert one)
-                onUser?.Invoke(new User {
+                onUser?.Invoke(new User
+                {
                     user_id = userId,
-                    email   = email,
+                    email = email,
                     username = string.IsNullOrEmpty(display) ? null : display
                 });
             }
@@ -304,7 +440,7 @@ public class SupabaseAuth : MonoBehaviour
 
     private IEnumerator UpsertsAfterLogin(string accessToken, string userId, string email, Action done)
     {
-        // Users upsert
+        // Users upsert (keep simple; you can add elo upserts later if needed)
         string username = CourseManager.Instance.user?.username;
         string userUrl = $"{SUPABASE_URL}/rest/v1/Users";
         var userData = new Dictionary<string, object>
@@ -315,6 +451,7 @@ public class SupabaseAuth : MonoBehaviour
         };
         string userJson = JsonConvert.SerializeObject(userData);
         yield return PostToSupabase(userUrl, userJson, accessToken, "User", ignoreDups: true);
+
         done?.Invoke();
     }
 
@@ -326,7 +463,6 @@ public class SupabaseAuth : MonoBehaviour
 
         req.SetRequestHeader("Content-Type", "application/json");
         req.SetRequestHeader("apikey", SUPABASE_API_KEY);
-        // CRUCIAL: use user's token so RLS can use auth.uid()
         req.SetRequestHeader("Authorization", $"Bearer {accessToken}");
         if (ignoreDups) req.SetRequestHeader("Prefer", "resolution=ignore-duplicates");
 
