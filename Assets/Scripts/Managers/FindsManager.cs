@@ -10,7 +10,7 @@ public class FindsManager : MonoBehaviour
 {
     // Set these in the inspector or dynamically
     public string supabaseUrl = "https://erqsrecsciorigewaihr.supabase.co";
-    public string supabaseApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
+    public string supabaseApiKey = "";
     public string bucketName = "finds"; // your Supabase bucket name
 
     public void TakePhoto()
