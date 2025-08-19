@@ -39,7 +39,7 @@ public class SupabaseAuth : MonoBehaviour
     // ---------- Supabase ----------
     [Header("Supabase")]
     [SerializeField] private string SUPABASE_URL = "https://erqsrecsciorigewaihr.supabase.co";
-    [SerializeField] private string SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycXNyZWNzY2lvcmlnZXdhaWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMTIwNjYsImV4cCI6MjA2OTY4ODA2Nn0.0M6QpU8h-_6zESOlyuXB3lkq7RXlOLXhKEPMCax14zU";
+    [SerializeField] private string SUPABASE_API_KEY = "";
 
     // ---------- UI ----------
     [Header("UI")]
